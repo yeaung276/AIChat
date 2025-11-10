@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>WebRTC Echo Video Call</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+
+        .video-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .video-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        video {
+            width: 480px;
+            height: 360px;
+            background: #000;
+            border-radius: 4px;
+        }
+
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+
+        #startButton {
+            background: #4CAF50;
+            color: white;
+        }
+
+        #startButton:hover {
+            background: #45a049;
+        }
+
+        #startButton:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        #stopButton {
+            background: #f44336;
+            color: white;
+        }
+
+        #stopButton:hover {
+            background: #da190b;
+        }
+
+        #stopButton:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+
+        .info {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .label {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🎥 WebRTC Video Call</h1>
+    <div class="status info">
+        The server will echo your video back with a 2-second delay
+    </div>
+
+    <div class="controls">
+        <button id="startButton" disabled>Start Call</button>
+        <button id="stopButton" disabled>Stop Call</button>
+    </div>
+
+    <div class="video-container">
+        <div class="video-box">
+            <div class="label">You</div>
+            <video id="localVideo" autoplay muted playsinline></video>
+        </div>
+        <div class="video-box">
+            <div class="label">System</div>
+            <video id="remoteVideo" autoplay playsinline></video>
+        </div>
+    </div>
+
+    <script>
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+
+        let pc = null;
+        let ws = null;
+        let localStream = null;
+
+        async function load() {
+            // Create WebSocket connection
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws/sdp`);
+
+            ws.onerror = (error) => console.error('WebSocket error:', error)
+            ws.onclose = () => console.log('WebSocket closed')
+
+            ws.onopen = async () => {startButton.disabled = false};
+
+            ws.onmessage = async (event) => {
+                const message = JSON.parse(event.data);
+                console.log('Received message:', message.type);
+
+                if (message.type === 'answer') {
+                    await pc.setRemoteDescription(new RTCSessionDescription({ type: "answer", sdp: message.sdp }));
+                }
+            };
+
+            // create RTC connection
+            const config = {
+                iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            };
+
+            pc = new RTCPeerConnection(config);
+            pc.ontrack = (event) => {
+                console.log('Received remote track');
+                // remoteVideo.srcObject = event.streams[0];
+                stopButton.disabled = false;
+            };
+
+            pc.onconnectionstatechange = (event) => {
+                if (event.target.connectionState == "connected"){
+                    stopButton.disabled = false
+                }
+            }
+
+
+            // // Handle ICE candidates
+            // pc.onicecandidate = (event) => {
+            //     if (event.candidate) {
+            //         ws.send(JSON.stringify({
+            //             type: 'ice',
+            //             candidate: event.candidate
+            //         }));
+            //     }
+            // };
+        }
+
+        async function start() {
+            startButton.disabled = true;
+
+            // Get user media
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: false
+                });
+                // localVideo.srcObject = localStream;
+            } catch (e) {
+                alert('Could not access camera: ' + e.message);
+                startButton.disabled = false;
+                return;
+            }
+
+
+            localStream.getTracks().forEach(track => {
+                pc.addTrack(track, localStream);
+            });
+
+            // Create and send offer
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+
+            ws.send(JSON.stringify({
+                type: 'offer',
+                sdp: offer.sdp
+            }));
+
+        };
+
+        async function stop() {
+            stopButton.disabled = true;
+
+            if (pc) {
+                pc.close();
+                pc = null;
+            }
+
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localStream = null;
+            }
+
+            localVideo.srcObject = null;
+            remoteVideo.srcObject = null;
+
+            startButton.disabled = false;
+        }
+
+        document.addEventListener("DOMContentLoaded", load)
+        startButton.onclick = start
+        stopButton.onclick = stop
+    </script>
+</body>
+
+</html>
