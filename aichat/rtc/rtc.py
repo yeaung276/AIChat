@@ -30,7 +30,7 @@ async def websocket(ws: WebSocket):
                 continue 
                 
     except Exception as e:
-        print(f"Error: {e}")
+        logging.error(e)
     
     finally:
         await manager.remove_rtc(id)

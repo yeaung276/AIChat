@@ -1,0 +1,25 @@
+import asyncio
+from vllm import AsyncLLMEngine, AsyncEngineArgs, SamplingParams
+
+class TinyLLama:
+    engine: AsyncLLMEngine | None = None
+    params: SamplingParams | None = None
+
+    @classmethod
+    async def configure(cls, model="TinyLlama/TinyLlama-1.1B-Chat-v1.0", temperature=0.7, max_token=512, device = 'cpu'):
+      engine_args = AsyncEngineArgs(
+          model=model,
+          max_model_len=max_token,
+          enforce_eager=True, 
+          gpu_memory_utilization=0.5,
+      )
+      cls.engine = AsyncLLMEngine.from_engine_args(engine_args)
+      cls.params = SamplingParams(temperature=temperature, max_tokens=max_token)
+    
+    async def generate(self, text: str):
+      if self.engine is None:
+        raise Exception("Engine not configured.")
+      async for out in self.engine.generate(prompt=text, sampling_params=self.params, request_id="<placeholder>"):
+          if out.finished:
+                break
+          yield out.outputs[0].text

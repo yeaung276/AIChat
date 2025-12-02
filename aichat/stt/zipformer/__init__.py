@@ -1,0 +1,1 @@
+from .zipformer import ZipformerSTT
