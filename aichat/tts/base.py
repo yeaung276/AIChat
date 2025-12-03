@@ -1,0 +1,6 @@
+from typing import Protocol
+
+class TTS(Protocol):
+    def configure(self, sr: int): ...
+    
+    def synthesize(self, text: str) -> bytes: ...

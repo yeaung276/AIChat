@@ -1,4 +1,3 @@
-import asyncio
 from vllm import AsyncLLMEngine, AsyncEngineArgs, SamplingParams
 
 class TinyLLama:
