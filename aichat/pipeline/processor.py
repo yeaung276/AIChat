@@ -4,7 +4,7 @@ from typing import cast
 from av.audio.resampler import AudioResampler
 from aiortc import VideoStreamTrack, AudioStreamTrack, MediaStreamTrack, RTCPeerConnection
 
-from aichat.stt.zipformer import ZipformerSTT
+from aichat.components.stt.zipformer import ZipformerSTT
 
 from .tracks import AudioOutTrack, VideoOutTrack
 

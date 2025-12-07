@@ -1,3 +1,4 @@
+from typing import AsyncGenerator
 from vllm import AsyncLLMEngine, AsyncEngineArgs, SamplingParams
 
 class TinyLLama:
@@ -5,7 +6,7 @@ class TinyLLama:
     params: SamplingParams | None = None
 
     @classmethod
-    async def configure(cls, model="TinyLlama/TinyLlama-1.1B-Chat-v1.0", temperature=0.7, max_token=512, device = 'cpu'):
+    def configure(cls, model="TinyLlama/TinyLlama-1.1B-Chat-v1.0", temperature=0.7, max_token=512, device = 'cpu'):
       engine_args = AsyncEngineArgs(
           model=model,
           max_model_len=max_token,
@@ -15,10 +16,13 @@ class TinyLLama:
       cls.engine = AsyncLLMEngine.from_engine_args(engine_args)
       cls.params = SamplingParams(temperature=temperature, max_tokens=max_token)
     
-    async def generate(self, text: str):
+    async def generate(self, text: str) -> AsyncGenerator[str, None]:
       if self.engine is None:
         raise Exception("Engine not configured.")
       async for out in self.engine.generate(prompt=text, sampling_params=self.params, request_id="<placeholder>"):
           if out.finished:
                 break
           yield out.outputs[0].text
+          
+    async def warmup(self, text: str):
+      pass

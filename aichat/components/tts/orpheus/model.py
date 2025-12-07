@@ -160,6 +160,14 @@ class Orpheus:
 
         thread.join()
               
+
+    async def warmup(self, text: str):
+        pass
+    
+    def sampling_rate(self):
+        return 24_000
+    
+
 if __name__ == '__main__':
     import wave
     import time

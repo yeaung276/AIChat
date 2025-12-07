@@ -2,6 +2,7 @@ import asyncio
 from aiortc import VideoStreamTrack, AudioStreamTrack, MediaStreamTrack
 from av import AudioFrame
 
+MIN_BUFFER_FRAME = 5
 
 class AudioOutTrack(AudioStreamTrack):
     kind = "audio"
@@ -9,15 +10,15 @@ class AudioOutTrack(AudioStreamTrack):
     def __init__(self):
         super().__init__()
         self.queue = asyncio.Queue()
-        
-    async def add_frame(self, frame):
-        await self.queue.put(frame)
+        self.sampling_rate = 24_000
 
     async def recv(self):
         try:
+            if self.queue.qsize() < MIN_BUFFER_FRAME:
+                raise asyncio.QueueEmpty()
             frame = self.queue.get_nowait()
             # (call once to advance timestamp & maintain sync)
-            _ = await super().recv()
+            frame.sample_ra
         except asyncio.QueueEmpty:
             # fallback: dummy silence with built-in pacing
             frame = await super().recv()
@@ -31,9 +32,6 @@ class VideoOutTrack(VideoStreamTrack):
     def __init__(self):
         super().__init__()
         self.queue = asyncio.Queue()
-        
-    async def add_frame(self, frame):
-        await self.queue.put(frame)
 
     async def recv(self):
         try:
