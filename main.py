@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI()
 
 app.include_router(negotiator)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
 
 @app.get("/")

@@ -12,7 +12,7 @@ class ConnectionManager:
         
     async def register(self, id: uuid.UUID, ws: WebSocket):
         rtc = RTCPeerConnection()
-        proc = Processor(rtc, ws)
+        proc = Processor()
         
         self._conns[id] = rtc, ws, proc
         
@@ -34,7 +34,7 @@ class ConnectionManager:
         del self._conns[id]
     
     async def accept_offer(self, id: uuid.UUID, sdp: str) -> str:
-        rtc, _, _ = self._conns[id]
+        rtc, ws, proc = self._conns[id]
         assert rtc is not None, "connection id not found."
         await rtc.setRemoteDescription(
             RTCSessionDescription(sdp=sdp, type="offer")
@@ -42,5 +42,7 @@ class ConnectionManager:
         
         answer = await rtc.createAnswer()
         await rtc.setLocalDescription(answer)
+        
+        proc.bind(rtc, ws)
         
         return rtc.localDescription.sdp

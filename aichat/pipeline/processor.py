@@ -15,7 +15,7 @@ from aichat.types import MESSAGE_TYPE_SPEECH_SPEAK
 class Processor:
     """Processor will collect and segment incoming frames, process each, and sync generated frames for output."""
 
-    def __init__(self, rtc: RTCPeerConnection, ws: WebSocket):
+    def __init__(self):
         # I/O 
         self.websocket: WebSocket
         self.llm_queue = asyncio.Queue()
@@ -26,10 +26,9 @@ class Processor:
         self.llm = processors["llm_model"]
         
         # tasks
-        self.video_task: asyncio.Task
-        self.audio_task: asyncio.Task
-        self.llm_task: asyncio.Task
-        self.bind(rtc, ws)
+        self.video_task: asyncio.Task | None = None
+        self.audio_task: asyncio.Task | None = None
+        self.llm_task: asyncio.Task | None = None
         
     
     def bind(self, rtc: RTCPeerConnection, ws: WebSocket):
