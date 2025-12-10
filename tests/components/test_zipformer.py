@@ -1,15 +1,16 @@
 # Reference: https://github.com/k2-fsa/sherpa-onnx/blob/master/python-api-examples/speech-recognition-from-microphone.py
 import asyncio
 
-from aichat.stt.zipformer import ZipformerSTT
+from aichat.components.stt.zipformer import ZipformerSTT
+import sounddevice as sd
 
-MODEL_DIR = "/Users/yeaung/Workspace/AIChat/aichat/stt/zipformer/model"
-TEST_AUDIO = "/Users/yeaung/Workspace/AIChat/tests/audios/voice-sample.mp3"
+MODEL_DIR = "models/zipformer"
+TEST_AUDIO = "tests/audios/voice-sample.mp3"
 
 
 
 async def main():
-    ZipformerSTT.configure(sr=16000, model_dir='')
+    ZipformerSTT.configure(sample_rate=16000, model_dir='models/zipformer')
     stt = ZipformerSTT()
 
     print("Started! Please speak")
@@ -21,7 +22,7 @@ async def main():
         while True:
             samples, _ = await asyncio.to_thread(s.read, samples_per_read)  # a non-blocking read
             samples = samples.reshape(-1)
-            stt.accept(samples)
+            await stt.accept(samples)
             
 
 
