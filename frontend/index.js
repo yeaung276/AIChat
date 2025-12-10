@@ -2,6 +2,9 @@
 const dialBtn = document.getElementById("dial");
 const dropBtn = document.getElementById("drop");
 const avatar = document.getElementById("avatar");
+const chatBtn = document.getElementById("chat-toggle");
+const chatPanel = document.getElementById("chat-panel")
+const chat = document.getElementById("chat-messages");
 
 // core modules
 const animator = new window.HeadAnimator(avatar);
@@ -19,8 +22,20 @@ dialBtn.addEventListener("click", async () => {
   console.log("dialing...");
   showLoading();
   await communicator.start(
-    (message) => animator.speak(message),
-    () => console.log("speech interrupted")
+    (message) => {
+      animator.speak(message)
+    },
+    () => {
+      console.log("speech interrupted")
+    },
+    (data) => {
+      console.log(data)
+      if(data.actor == "user"){
+        pushMessage(data.message, "right")
+      } else{
+        pushMessage(data.message, "left")
+      }
+    }
   );
   await animator.start();
   toggleControl("dialing")
@@ -32,6 +47,10 @@ dropBtn.addEventListener("click", async () => {
   await communicator.stop();
   await animator.stop();
   toggleControl("free")
+});
+
+chatBtn.addEventListener('click', () => {
+  chatPanel.classList.toggle("open")
 });
 
 // util functions
@@ -64,4 +83,15 @@ function toggleControl(mode) {
     dialBtn.hidden = false;
     dropBtn.hidden = true;
   }
+}
+
+export function pushMessage(text, side = "left") {
+    const bubble = document.createElement("div");
+    bubble.className = `bubble ${side}`;
+    bubble.textContent = text;
+
+    chat.appendChild(bubble);
+
+    // Auto-scroll to bottom
+    chat.scrollTop = chat.scrollHeight;
 }

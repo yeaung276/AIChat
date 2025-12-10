@@ -2,6 +2,7 @@ const MESSAGE_TYPE_SDP_ANSWER = "SDP_ANSWER";
 const MESSAGE_TYPE_SDP_OFFER = "SDP_OFFER"
 const MESSAGE_TYPE_SPEECH_SPEAK = "SPEECH_SPEAK";
 const MESSAGE_TYPE_SPEECH_INTERRUPT = "SPEECH_INTERRUPT";
+const MESSAGE_TYPE_SPEECH_DEBUG = "SPEECH_DEBUG"
 
 const ICE_CONFIG = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -34,9 +35,14 @@ class Communicator {
     });
   }
 
-  async start(onSpeechSpeak, onSpeechInterrupt) {
+  async start(
+    onSpeechSpeak = () => null, 
+    onSpeechInterrupt = () => null, 
+    onSpeechDebug = () => null
+  ) {
     this.onSpeechSpeak = onSpeechSpeak;
     this.onSpeechInterrupt = onSpeechInterrupt;
+    this.onSpeechDebug = onSpeechDebug
 
     this.rtc = new RTCPeerConnection(ICE_CONFIG);
 
@@ -82,6 +88,9 @@ class Communicator {
     if (this.localStreams) {
       this.localStreams.getTracks().forEach((track) => track.stop());
     }
+    this.onSpeechDebug = null
+    this.onSpeechInterrupt = null
+    this.onSpeechSpeak = null
   }
 
   async handleWSMessage(event) {
@@ -95,11 +104,15 @@ class Communicator {
     }
 
     if (message.type === MESSAGE_TYPE_SPEECH_SPEAK) {
-      this.onSpeechSpeak(message.data);
+      this.onSpeechSpeak && this.onSpeechSpeak(message.data);
     }
 
     if (message.type === MESSAGE_TYPE_SPEECH_INTERRUPT) {
-      this.onSpeechInterrupt(message.data);
+      this.onSpeechInterrupt && this.onSpeechInterrupt(message.data);
+    }
+
+    if (message.type == MESSAGE_TYPE_SPEECH_DEBUG){
+      this.onSpeechDebug && this.onSpeechDebug(message.data)
     }
   }
 }

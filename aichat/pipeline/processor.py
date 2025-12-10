@@ -5,7 +5,7 @@ from fastapi import WebSocket
 from av.audio.resampler import AudioResampler
 from aiortc import VideoStreamTrack, AudioStreamTrack, MediaStreamTrack, RTCPeerConnection
 
-from aichat.types import MESSAGE_TYPE_SPEECH_SPEAK
+from aichat.types import MESSAGE_TYPE_SPEECH_SPEAK, MESSAGE_TYPE_SPEECH_DEBUG
 from aichat.pipeline.factory import ModelFactory
 
 
@@ -61,12 +61,26 @@ class Processor:
     async def _read_llm_queue(self, queue: asyncio.Queue):
         while True:
             message = await queue.get()
-            final = ""
+            await self.websocket.send_json({
+                "type": MESSAGE_TYPE_SPEECH_DEBUG,
+                "data":  {
+                    "actor": "user",
+                    "message": message 
+                }
+            })
+            response = ""
             async for resp in self.llm.generate(message):
-                final = resp
+                response = resp
             await self.websocket.send_json({
                 "type": MESSAGE_TYPE_SPEECH_SPEAK,
-                "data": final
+                "data": response
+            })
+            await self.websocket.send_json({
+                "type": MESSAGE_TYPE_SPEECH_DEBUG,
+                "data":  {
+                    "actor": "system",
+                    "message": response 
+                }
             })
                 
                 
