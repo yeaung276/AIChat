@@ -12,7 +12,7 @@ class ZipformerSTT:
     engine: OnlineRecognizer | None = None
     
     @classmethod
-    def configure(cls, sr: int, model_dir: Union[str, os.PathLike],  device: Literal['cpu', 'cuda'] = 'cpu', ):
+    def configure(cls, sample_rate: int, model_dir: Union[str, os.PathLike],  device: Literal['cpu', 'cuda'] = 'cpu', ):
         if not os.path.exists(model_dir):
             logging.warning("model not found in %s. Please download model at https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20.tar.bz2", model_dir)
             raise ValueError("model not found")
@@ -31,7 +31,7 @@ class ZipformerSTT:
             joiner=joiner,
             provider=device,
             num_threads=NUM_THREAD,
-            sample_rate=sr,
+            sample_rate=sample_rate,
             feature_dim=80,
             enable_endpoint_detection=True,
             rule1_min_trailing_silence=2.4,
@@ -39,7 +39,7 @@ class ZipformerSTT:
             rule3_min_utterance_length=20,  # it essentially disables this rule
         )
         
-        cls.sampling_rate = sr
+        cls.sample_rate = sample_rate
 
         
     def __init__(self):
@@ -48,25 +48,30 @@ class ZipformerSTT:
             raise ValueError("engine not initialized.")
         self.stream = self.engine.create_stream()
         self.queue_o = asyncio.Queue()
-        asyncio.create_task(self.process())
+        
+        self.task = asyncio.create_task(self.process())
     
-    def accept(self, samples):
+    async def accept(self, samples):
         if self.engine is None:
             logging.error("Engine not initialized. please call configure method to start the engine.")
             raise ValueError("engine not initialized.")
         
         # nsamp = samples.astype(np.float32) / 32768
         self.stream.accept_waveform(48000, samples)
+        if not self.queue_o.empty():
+            return await self.queue_o.get()
+        return None
         
         
     async def process(self):
         if self.engine is None:
             logging.error("Engine not initialized. please call configure method to start the engine.")
             raise ValueError("engine not initialized.")
-        
+
         while True:
             while self.engine.is_ready(self.stream):
                 self.engine.decode_stream(self.stream)
+            print("stream", self.stream.result.text)
             await asyncio.sleep(0)
             if self.engine.is_endpoint(self.stream):
                 await self.queue_o.put(self.engine.get_result(self.stream))

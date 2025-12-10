@@ -1,0 +1,1 @@
+This is dummy stt model which always output `This is output from dummy stt component` every 20 second.

@@ -5,8 +5,8 @@ from fastapi import WebSocket
 from av.audio.resampler import AudioResampler
 from aiortc import VideoStreamTrack, AudioStreamTrack, MediaStreamTrack, RTCPeerConnection
 
-from .config import config_resolver
 from aichat.types import MESSAGE_TYPE_SPEECH_SPEAK
+from aichat.pipeline.factory import ModelFactory
 
 
 
@@ -21,9 +21,7 @@ class Processor:
         self.llm_queue = asyncio.Queue()
         
         # processors
-        processors = config_resolver({})
-        self.stt = processors["tts_model"]
-        self.llm = processors["llm_model"]
+        self.stt, self.llm = ModelFactory.create_models(stt="zipformer")
         
         # tasks
         self.video_task: asyncio.Task | None = None
@@ -49,7 +47,7 @@ class Processor:
         while True:
             frame = resampler.resample(await track.recv())[0] # type: ignore
             pcm = frame.to_ndarray() 
-            message = self.stt.accept(pcm.flatten())
+            message = await self.stt.accept(pcm.flatten())
             if message is not None:
                 await self.llm_queue.put(message)
                 

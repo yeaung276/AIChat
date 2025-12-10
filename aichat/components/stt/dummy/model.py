@@ -9,7 +9,7 @@ class DummySTT:
         self.interval = interval_sec
         self._last_emit = 0.0
 
-    def accept(self, samples):
+    async def accept(self, samples):
         now = time.time()
 
         # If enough time has passed, emit a string and reset timer

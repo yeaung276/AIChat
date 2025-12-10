@@ -1,0 +1,6 @@
+stt:
+  - name: zipformer
+    config:
+      sample_rate: 16000
+      model_dir: "models/zipformer"
+      device: "cpu"
