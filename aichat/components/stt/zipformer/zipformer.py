@@ -1,9 +1,10 @@
 import os
+import asyncio
 import logging
 from typing import Literal, Union
-import asyncio
 
 import sherpa_onnx
+import numpy as np
 from sherpa_onnx import OnlineRecognizer
 
 NUM_THREAD = 2
@@ -51,13 +52,13 @@ class ZipformerSTT:
         
         self.task = asyncio.create_task(self.process())
     
-    async def accept(self, samples):
+    async def accept(self, samples, sample_rate: int,):
         if self.engine is None:
             logging.error("Engine not initialized. please call configure method to start the engine.")
             raise ValueError("engine not initialized.")
         
-        # nsamp = samples.astype(np.float32) / 32768
-        self.stream.accept_waveform(48000, samples)
+        nsamp = samples.astype(np.float32) / 32768
+        self.stream.accept_waveform(sample_rate, nsamp)
         if not self.queue_o.empty():
             return await self.queue_o.get()
         return None
@@ -71,10 +72,10 @@ class ZipformerSTT:
         while True:
             while self.engine.is_ready(self.stream):
                 self.engine.decode_stream(self.stream)
-            print("stream", self.stream.result.text)
+                await asyncio.sleep(0)
             await asyncio.sleep(0)
             if self.engine.is_endpoint(self.stream):
-                await self.queue_o.put(self.engine.get_result(self.stream))
-                self.stream.reset()
-    
-    
+                result = self.engine.get_result(self.stream)
+                self.engine.reset(self.stream)
+                if result:
+                    await self.queue_o.put(result)

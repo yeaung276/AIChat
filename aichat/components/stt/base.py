@@ -1,5 +1,6 @@
 from typing import Protocol, Literal
 
 class STT(Protocol):
-    async def accept(self, samples) -> None|str: ...
+    sample_rate: int
+    async def accept(self, samples, sample_rate: int) -> None|str: ...
     

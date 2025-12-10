@@ -36,13 +36,13 @@ class ConnectionManager:
     async def accept_offer(self, id: uuid.UUID, sdp: str) -> str:
         rtc, ws, proc = self._conns[id]
         assert rtc is not None, "connection id not found."
+        proc.bind(rtc, ws)
+        
         await rtc.setRemoteDescription(
             RTCSessionDescription(sdp=sdp, type="offer")
         )
         
         answer = await rtc.createAnswer()
         await rtc.setLocalDescription(answer)
-        
-        proc.bind(rtc, ws)
         
         return rtc.localDescription.sdp

@@ -43,11 +43,11 @@ class Processor:
         
 
     async def _read_audio_track(self, track: AudioStreamTrack):
-        resampler = AudioResampler(format='s16', layout='mono', rate=16000)
+        resampler = AudioResampler(format='s16', layout='mono', rate=self.stt.sample_rate)
         while True:
             frame = resampler.resample(await track.recv())[0] # type: ignore
             pcm = frame.to_ndarray() 
-            message = await self.stt.accept(pcm.flatten())
+            message = await self.stt.accept(pcm.flatten(), sample_rate=self.stt.sample_rate)
             if message is not None:
                 await self.llm_queue.put(message)
                 

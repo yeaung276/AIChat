@@ -8,8 +8,9 @@ class DummySTT:
     def __init__(self, interval_sec: float = 20.0):
         self.interval = interval_sec
         self._last_emit = 0.0
+        self.sample_rate= 16_000
 
-    async def accept(self, samples):
+    async def accept(self, samples, sample_rate: int):
         now = time.time()
 
         # If enough time has passed, emit a string and reset timer
