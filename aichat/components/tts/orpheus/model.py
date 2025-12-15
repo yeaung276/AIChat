@@ -172,7 +172,6 @@ if __name__ == '__main__':
     import wave
     import time
 
-    # CRITICAL: Configure OUTSIDE event loop (like working.py does)
     Orpheus.configure(device='cpu')
     model = Orpheus()
 
