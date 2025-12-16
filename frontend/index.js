@@ -3,7 +3,7 @@ const dialBtn = document.getElementById("dial");
 const dropBtn = document.getElementById("drop");
 const avatar = document.getElementById("avatar");
 const chatBtn = document.getElementById("chat-toggle");
-const chatPanel = document.getElementById("chat-panel")
+const chatPanel = document.getElementById("chat-panel");
 const chat = document.getElementById("chat-messages");
 
 // core modules
@@ -22,23 +22,24 @@ dialBtn.addEventListener("click", async () => {
   console.log("dialing...");
   showLoading();
   await communicator.start(
-    (message) => {
-      animator.speak(message)
+    async (message) => {
+      const startTime = performance.now();
+      await animator.speak(message);
+      const endTime = performance.now();
+
+      pushMessage(message, "left", { s: `${Math.round(endTime - startTime)}ms` });
     },
     () => {
-      console.log("speech interrupted")
+      console.log("speech interrupted");
     },
     (data) => {
-      console.log(data)
-      if(data.actor == "user"){
-        pushMessage(data.message, "right")
-      } else{
-        pushMessage(data.message, "left")
+      if (data.actor == "user") {
+        pushMessage(data.message, "right");
       }
     }
   );
   await animator.start();
-  toggleControl("dialing")
+  toggleControl("dialing");
   removeLoading();
   console.log("ready.");
 });
@@ -46,11 +47,11 @@ dialBtn.addEventListener("click", async () => {
 dropBtn.addEventListener("click", async () => {
   await communicator.stop();
   await animator.stop();
-  toggleControl("free")
+  toggleControl("free");
 });
 
-chatBtn.addEventListener('click', () => {
-  chatPanel.classList.toggle("open")
+chatBtn.addEventListener("click", () => {
+  chatPanel.classList.toggle("open");
 });
 
 // util functions
@@ -85,13 +86,22 @@ function toggleControl(mode) {
   }
 }
 
-export function pushMessage(text, side = "left") {
-    const bubble = document.createElement("div");
-    bubble.className = `bubble ${side}`;
-    bubble.textContent = text;
+export function pushMessage(text, side = "left", meta = {}) {
+  const bubble = document.createElement("div");
+  bubble.className = `bubble ${side}`;
+  bubble.textContent = text;
 
-    chat.appendChild(bubble);
+  const debug = document.createElement("div");
+  debug.className = "time-debug";
+  debug.textContent = Object.keys(meta).reduce(
+    (p, v) => p + ` ${v}: ${meta[v]}`,
+    ""
+  );
 
-    // Auto-scroll to bottom
-    chat.scrollTop = chat.scrollHeight;
+  bubble.appendChild(debug);
+
+  chat.appendChild(bubble);
+
+  // Auto-scroll to bottom
+  chat.scrollTop = chat.scrollHeight;
 }

@@ -21,7 +21,7 @@ class Processor:
         self.llm_queue = asyncio.Queue()
         
         # processors
-        self.stt, self.llm = ModelFactory.create_models(stt="zipformer")
+        self.stt, self.llm = ModelFactory.create_models()
         
         # tasks
         self.video_task: asyncio.Task | None = None
@@ -74,13 +74,6 @@ class Processor:
             await self.websocket.send_json({
                 "type": MESSAGE_TYPE_SPEECH_SPEAK,
                 "data": response
-            })
-            await self.websocket.send_json({
-                "type": MESSAGE_TYPE_SPEECH_DEBUG,
-                "data":  {
-                    "actor": "system",
-                    "message": response 
-                }
             })
                 
                 
