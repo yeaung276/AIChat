@@ -1,6 +1,6 @@
 class DummyLLM:        
     async def generate(self, text: str):
-        yield "hello this is response from dummy llm"
+        yield "Hi, I am Aura. What can I help you with?"
     
     async def warmup(self, text: str):
         pass

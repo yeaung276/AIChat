@@ -21,7 +21,7 @@ class Processor:
         self.llm_queue = asyncio.Queue()
         
         # processors
-        self.stt, self.llm = ModelFactory.create_models()
+        self.stt, self.llm = ModelFactory.create_models(stt="zipformer")
         
         # tasks
         self.video_task: asyncio.Task | None = None
