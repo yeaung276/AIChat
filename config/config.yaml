@@ -4,3 +4,9 @@ stt:
       sample_rate: 16000
       model_dir: "models/zipformer"
       device: "cpu"
+video:
+  - name: deepface
+    config:
+      sample_rate: 5 # frame per second
+      decay_rate: 7
+      

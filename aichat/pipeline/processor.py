@@ -21,7 +21,7 @@ class Processor:
         self.llm_queue = asyncio.Queue()
         
         # processors
-        self.stt, self.llm = ModelFactory.create_models(stt="zipformer")
+        self.stt, self.llm, self.video_analyzer = ModelFactory.create_models(video_analyzer="deepface")
         
         # tasks
         self.video_task: asyncio.Task | None = None
@@ -55,8 +55,7 @@ class Processor:
 
     async def _read_video_track(self, track: VideoStreamTrack):
         while True:
-            frame = await track.recv()
-            await asyncio.sleep(0)
+            await self.video_analyzer.accept(await track.recv()) # type: ignore
             
     async def _read_llm_queue(self, queue: asyncio.Queue):
         while True:

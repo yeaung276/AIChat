@@ -49,7 +49,7 @@ class Communicator {
     return new Promise(async (resolve, reject) => {
       // Get user media
       this.localStreams = await navigator.mediaDevices.getUserMedia({
-        video: false,
+        video: true,
         audio: true,
       });
 

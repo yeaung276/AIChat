@@ -23,6 +23,7 @@ class ConnectionManager:
             if state in ("failed", "closed", "disconnected"):
                 # Prevent recursive call if already removed
                 if id in self._conns:
+                    print("closing connection due to invalid state change: ", state)
                     await self.remove_rtc(id)
         
         return id
