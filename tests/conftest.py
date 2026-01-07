@@ -1,5 +1,121 @@
 import sys
 from pathlib import Path
+from unittest.mock import AsyncMock, Mock, MagicMock
+import uuid
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+
+
+# ==================== Mock Fixtures ====================
+
+@pytest.fixture
+def mock_websocket():
+    """Mock FastAPI WebSocket."""
+    ws = AsyncMock()
+    ws.accept = AsyncMock()
+    ws.send_json = AsyncMock()
+    ws.send_text = AsyncMock()
+    ws.receive_text = AsyncMock()
+    ws.iter_text = AsyncMock()
+    return ws
+
+
+@pytest.fixture
+def mock_rtc_peer_connection():
+    """Mock aiortc RTCPeerConnection."""
+    rtc = Mock()
+    rtc.connectionState = "new"
+    rtc.close = AsyncMock()
+    rtc.setRemoteDescription = AsyncMock()
+    rtc.createAnswer = AsyncMock()
+    rtc.setLocalDescription = AsyncMock()
+
+    # Mock local description
+    rtc.localDescription = Mock()
+    rtc.localDescription.sdp = "mock_sdp_answer"
+
+    # Mock event handlers
+    rtc._event_handlers = {}
+
+    def on(event):
+        def decorator(func):
+            rtc._event_handlers[event] = func
+            return func
+        return decorator
+
+    rtc.on = on
+    return rtc
+
+
+@pytest.fixture
+def mock_video_track():
+    """Mock aiortc VideoStreamTrack."""
+    track = AsyncMock()
+    track.kind = "video"
+    track.recv = AsyncMock()
+    return track
+
+
+@pytest.fixture
+def mock_audio_track():
+    """Mock aiortc AudioStreamTrack."""
+    track = AsyncMock()
+    track.kind = "audio"
+    track.recv = AsyncMock()
+    return track
+
+
+@pytest.fixture
+def mock_stt():
+    """Mock STT component."""
+    stt = AsyncMock()
+    stt.sample_rate = 16000
+    stt.accept = AsyncMock(return_value=None)
+    return stt
+
+
+@pytest.fixture
+def mock_llm():
+    """Mock LLM component."""
+    llm = Mock()
+
+    async def generate_mock(text):
+        yield "Response to: " + text
+
+    llm.generate = Mock(side_effect=generate_mock)
+    llm.warmup = AsyncMock()
+    return llm
+
+
+@pytest.fixture
+def mock_video_analyzer():
+    """Mock VideoAnalyzer component."""
+    analyzer = AsyncMock()
+    analyzer.emotion = "neutral"
+    analyzer.accept = AsyncMock()
+    return analyzer
+
+
+@pytest.fixture
+def mock_audio_frame():
+    """Mock av.AudioFrame."""
+    frame = Mock()
+    frame.to_ndarray = Mock(return_value=Mock())
+    frame.to_ndarray.return_value.flatten = Mock(return_value=b'\x00' * 320)
+    return frame
+
+
+@pytest.fixture
+def mock_video_frame():
+    """Mock av.VideoFrame."""
+    frame = Mock()
+    frame.width = 640
+    frame.height = 480
+    return frame
+
+@pytest.fixture
+def unique_id():
+    """Generate unique UUID for tests."""
+    return uuid.uuid4()

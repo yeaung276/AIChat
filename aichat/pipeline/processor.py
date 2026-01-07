@@ -21,7 +21,7 @@ class Processor:
         self.llm_queue = asyncio.Queue()
         
         # processors
-        self.stt, self.llm, self.video_analyzer = ModelFactory.create_models(video_analyzer="deepface")
+        self.stt, self.llm, self.video_analyzer = ModelFactory.create_models()
         
         # tasks
         self.video_task: asyncio.Task | None = None

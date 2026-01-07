@@ -19,7 +19,7 @@ async def websocket(ws: WebSocket):
         async for message in ws.iter_text():
             data = json.loads(message)
             
-            if data['type'] == MESSAGE_TYPE_SDP_OFFER:
+            if data.get('type') == MESSAGE_TYPE_SDP_OFFER:
                 await manager.register(id, ws)
                 logging.info("accepting sdp offer for connection %s ...", id)
                 answer = await manager.accept_offer(id, data['sdp'])
@@ -28,6 +28,8 @@ async def websocket(ws: WebSocket):
                     "sdp": answer,
                 }) 
                 continue 
+            else:
+                logging.warning("Unrecognized message type: %s", data.get("type"))
                 
     except Exception as e:
         logging.error(e)

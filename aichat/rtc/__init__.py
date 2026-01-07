@@ -1,1 +1,1 @@
-from .rtc import negotiator
+from .websocket import negotiator
