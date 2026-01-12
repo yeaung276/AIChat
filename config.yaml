@@ -1,0 +1,18 @@
+speech:
+- name: zipformer
+  path: "aichat.components.stt.zipformer:ZipformerSTT"
+  config:
+    sample_rate: 16000
+    model_dir: "models/zipformer"
+    device: "cpu"
+
+llm:
+- name: tiny_llama
+  config:
+
+video:
+- name: deepface
+  config:
+    sample_rate: 5 # frame per second
+    decay_rate: 7
+      
