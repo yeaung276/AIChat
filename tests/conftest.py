@@ -119,3 +119,53 @@ def mock_video_frame():
 def unique_id():
     """Generate unique UUID for tests."""
     return uuid.uuid4()
+
+
+# ==================== Database Fixtures ====================
+
+@pytest.fixture(scope="function")
+def test_engine():
+    """Create in-memory SQLite engine for testing."""
+    from sqlmodel import SQLModel, create_engine
+    from sqlalchemy.pool import StaticPool
+    from aichat.db_models.user import User
+    from aichat.db_models.chat import Chat
+
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,  # Share same connection across all sessions
+    )
+    SQLModel.metadata.create_all(engine)
+    yield engine
+    engine.dispose()
+
+
+@pytest.fixture
+def test_db(test_engine):
+    """Create database session for testing."""
+    from sqlmodel import Session
+
+    with Session(test_engine) as session:
+        yield session
+
+
+@pytest.fixture
+def test_client(test_engine):
+    """Create FastAPI test client with database override."""
+    from fastapi.testclient import TestClient
+    from aichat.routes.user import router
+    from aichat.db_models.db import get_session
+    from fastapi import FastAPI
+    from sqlmodel import Session
+
+    app = FastAPI()
+    app.include_router(router)
+
+    def override_get_session():
+        with Session(test_engine) as session:
+            yield session
+
+    app.dependency_overrides[get_session] = override_get_session
+
+    return TestClient(app)

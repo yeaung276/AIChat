@@ -1,0 +1,20 @@
+from sqlmodel import SQLModel, create_engine, Session
+
+DATABASE_URL = "sqlite:///./aichat.db"
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False},
+)
+
+SQLModel.metadata.create_all(engine)
+
+def get_session():
+    with Session(engine) as session:
+        try:
+            yield session
+            session.commit()
+        except:
+            session.rollback()
+        finally:
+            session.flush()
