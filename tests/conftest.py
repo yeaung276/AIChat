@@ -154,13 +154,15 @@ def test_db(test_engine):
 def test_client(test_engine):
     """Create FastAPI test client with database override."""
     from fastapi.testclient import TestClient
-    from aichat.routes.user import router
+    from aichat.routes.user import router as user_router
+    from aichat.routes.chat import router as chat_router
     from aichat.db_models.db import get_session
     from fastapi import FastAPI
     from sqlmodel import Session
 
     app = FastAPI()
-    app.include_router(router)
+    app.include_router(user_router)
+    app.include_router(chat_router)
 
     def override_get_session():
         with Session(test_engine) as session:
