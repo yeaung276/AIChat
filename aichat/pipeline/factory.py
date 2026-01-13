@@ -9,6 +9,7 @@ from aichat.components.video.base import VideoAnalyzer
 logger = logging.getLogger(__name__)
         
 class ModelFactory:
+    """Factory for initialize and creation of per connection models"""
     supported_speech = {}
     supported_llm = {}
     supported_video_analyzer = {}

@@ -17,7 +17,9 @@ from aichat.pipeline.factory import ModelFactory
 class Processor:
     """Processor will collect and segment incoming frames, process each, and sync generated frames for output."""
 
-    def __init__(self, speech: str, video: str, llm: str):
+    def __init__(
+        self, speech: str, video: str, llm: str, voice: str, face: str, prompt: str = ""
+    ):
         # I/O
         self.websocket: WebSocket
         self.llm_queue = asyncio.Queue()
@@ -32,7 +34,7 @@ class Processor:
         self.audio_task: asyncio.Task | None = None
         self.llm_task: asyncio.Task | None = None
 
-    def bind(self, rtc: RTCPeerConnection, ws: WebSocket):
+    async def bind(self, rtc: RTCPeerConnection, ws: WebSocket):
         self.websocket = ws
 
         @rtc.on("track")
@@ -48,6 +50,16 @@ class Processor:
 
         self.llm_task = asyncio.create_task(self._read_llm_queue(self.llm_queue))
 
+    async def close(self):
+        if self.video_task:
+            self.video_task.cancel()
+        
+        if self.audio_task:
+            self.audio_task.cancel()
+            
+        if self.llm_task:
+            self.llm_task.cancel()     
+    
     async def _read_audio_track(self, track: AudioStreamTrack):
         resampler = AudioResampler(
             format="s16", layout="mono", rate=self.stt.sample_rate

@@ -10,7 +10,6 @@ class Agent(BaseModel):
 
 class ChatRequest(BaseModel):
     agent: Agent
-    speech: str | None = "zipformer"
-    dialogue: str | None = "tiny_llama"
+    dialogue: str = "tiny_llama"
     
     
