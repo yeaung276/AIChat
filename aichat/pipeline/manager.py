@@ -47,14 +47,14 @@ class ConnectionManager:
 
         # Create RTC object with connection lifecycle
         rtc = RTCPeerConnection()
-        
+
         @rtc.on("connectionstatechange")
         async def on_state_change():
             state = rtc.connectionState
 
             if state in ("failed", "closed", "disconnected") and chat.id in self._conns:
                 logger.warning(
-                    "closing connection due to invalid state change: ", state
+                    "closing connection due to invalid state change: %s", state
                 )
                 await self.deregister(chat.id)  # type: ignore
 
@@ -84,11 +84,12 @@ class ConnectionManager:
         return rtc.localDescription
 
     async def deregister(self, id: int):
+        assert id in self._conns, "connection id not found."
+
         rtc, proc = self._conns[id]
-        assert rtc is not None, "connection id not found."
+
         await rtc.close()
 
-        assert proc is not None, "connection id not found."
         await proc.close()
 
         del self._conns[id]

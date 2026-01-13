@@ -8,6 +8,46 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 
+# ==================== Model Factory Configuration ====================
+
+@pytest.fixture(scope="session", autouse=True)
+def configure_model_factory(request):
+    """Configure ModelFactory with dummy models for testing."""
+    import asyncio
+    from aichat.pipeline.factory import ModelFactory
+
+    config = {
+        "speech": [
+            {
+                "name": "dummy",
+                "path": "aichat.components.stt.dummy:DummySTT",
+                "config": {}
+            }
+        ],
+        "video": [
+            {
+                "name": "dummy",
+                "path": "aichat.components.video.dummy:DummyVideoAnalyzer",
+                "config": {}
+            }
+        ],
+        "llm": [
+            {
+                "name": "dummy",
+                "path": "aichat.components.llm.dummy:DummyLLM",
+                "config": {}
+            }
+        ],
+        "avatars": {
+            "voices": [{"name": "test_voice", "path": "/test/voice.mp3"}],
+            "faces": [{"name": "test_face", "path": "/test/face.png", "gender": "neutral"}]
+        }
+    }
+
+    # Run async configure in sync context
+    asyncio.run(ModelFactory.configure(config))
+
+
 # ==================== Mock Fixtures ====================
 
 @pytest.fixture
