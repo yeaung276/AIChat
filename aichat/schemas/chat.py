@@ -10,6 +10,7 @@ class Agent(BaseModel):
 
 class ChatRequest(BaseModel):
     agent: Agent
+    name: str
     dialogue: str = "tiny_llama"
     
     

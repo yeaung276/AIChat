@@ -72,6 +72,7 @@ async def create_chat(
     req: ChatRequest, user=Depends(get_current_user), db=Depends(get_session)
 ) -> Chat:
     chat = Chat(
+        name=req.name,
         voice=req.agent.voice,
         face=req.agent.face,
         prompt=req.agent.prompt,

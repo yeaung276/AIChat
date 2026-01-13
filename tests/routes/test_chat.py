@@ -39,7 +39,7 @@ class TestCreateChat:
                     "face": "julia",
                     "prompt": "You are a helpful assistant"
                 },
-                "speech": "zipformer",
+                "name": "test_name",
                 "dialogue": "tiny_llama"
             },
             cookies=cookies
@@ -57,6 +57,7 @@ class TestCreateChat:
         # Verify chat was created in database
         chat = test_db.exec(select(Chat).where(Chat.id == data["id"])).first()
         assert chat is not None
+        assert chat.name == "test_name"
         assert chat.voice == "af_bella"
         assert chat.face == "julia"
         assert chat.prompt == "You are a helpful assistant"
@@ -78,6 +79,7 @@ class TestCreateChat:
         response = test_client.post(
             "/chat",
             json={
+                "name": "test_name",
                 "agent": {
                     "voice": "af_bella",
                     "face": "julia",
@@ -144,6 +146,7 @@ class TestCreateChat:
         response1 = test_client.post(
             "/chat",
             json={
+                "name": "test_name",
                 "agent": {
                     "voice": "af_bella",
                     "face": "julia",
@@ -157,6 +160,7 @@ class TestCreateChat:
         response2 = test_client.post(
             "/chat",
             json={
+                "name": "test_name_2",
                 "agent": {
                     "voice": "af_bella",
                     "face": "julia",
@@ -196,6 +200,7 @@ class TestGetChats:
         test_client.post(
             "/chat",
             json={
+                "name": "test1",
                 "agent": {
                     "voice": "af_bella",
                     "face": "julia",
@@ -207,6 +212,7 @@ class TestGetChats:
         test_client.post(
             "/chat",
             json={
+                "name": "test2",
                 "agent": {
                     "voice": "af_bella",
                     "face": "julia",
@@ -222,7 +228,9 @@ class TestGetChats:
         assert response.status_code == 200
         data = response.json()
         assert len(data) == 2
+        assert data[0]["name"] == "test1"
         assert data[0]["prompt"] == "Chat 1"
+        assert data[1]["name"] == "test2"
         assert data[1]["prompt"] == "Chat 2"
 
     def test_get_chats_returns_empty_list_for_new_user(self, test_client):
@@ -269,6 +277,7 @@ class TestGetChats:
         test_client.post(
             "/chat",
             json={
+                "name": "test1",
                 "agent": {
                     "voice": "af_bella",
                     "face": "julia",
@@ -294,6 +303,7 @@ class TestGetChats:
         test_client.post(
             "/chat",
             json={
+                "name": "test2",
                 "agent": {
                     "voice": "af_bella",
                     "face": "julia",
@@ -333,6 +343,7 @@ class TestGetChatById:
         create_response = test_client.post(
             "/chat",
             json={
+                "name": "test",
                 "agent": {
                     "voice": "af_bella",
                     "face": "julia",
@@ -397,6 +408,7 @@ class TestGetChatById:
         create_response = test_client.post(
             "/chat",
             json={
+                "name": "test",
                 "agent": {
                     "voice": "af_bella",
                     "face": "julia",
@@ -468,6 +480,7 @@ class TestRequestValidation:
         response = test_client.post(
             "/chat",
             json={
+                "name": 'test',
                 "agent": {
                     "face": "julia",
                     "prompt": "Test"
@@ -497,6 +510,7 @@ class TestRequestValidation:
         response = test_client.post(
             "/chat",
             json={
+                "name": "test",
                 "agent": {
                     "voice": "af_bella",
                     "prompt": "Test"
@@ -526,6 +540,7 @@ class TestRequestValidation:
         response = test_client.post(
             "/chat",
             json={
+                "name": "test",
                 "agent": {
                     "voice": "af_bella",
                     "face": "julia"
@@ -578,6 +593,7 @@ class TestChatFlows:
         create_response = test_client.post(
             "/chat",
             json={
+                "name": "test",
                 "agent": {
                     "voice": "af_bella",
                     "face": "julia",
@@ -620,6 +636,7 @@ class TestChatFlows:
             response = test_client.post(
                 "/chat",
                 json={
+                    "name": "test",
                     "agent": {
                         "voice": "af_bella",
                         "face": "julia",
@@ -732,12 +749,12 @@ class TestEdgeCases:
         # Multiple operations with same session
         create1 = test_client.post(
             "/chat",
-            json={"agent": {"voice": "af_bella", "face": "julia", "prompt": "Chat 1"}},
+            json={"agent": {"voice": "af_bella", "face": "julia", "prompt": "Chat 1"}, "name": "test1"},
             cookies=cookies
         )
         create2 = test_client.post(
             "/chat",
-            json={"agent": {"voice": "af_bella", "face": "julia", "prompt": "Chat 2"}},
+            json={"agent": {"voice": "af_bella", "face": "julia", "prompt": "Chat 2"}, "name": "test2"},
             cookies=cookies
         )
         list_chats = test_client.get("/chats", cookies=cookies)
