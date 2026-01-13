@@ -1,4 +1,5 @@
 from sqlmodel import select
+from sqlalchemy.exc import IntegrityError
 from fastapi import APIRouter, Depends, Response, HTTPException
 
 from aichat.schemas.user import LoginRequest, RegisterRequest
@@ -44,7 +45,6 @@ async def login(
 async def register(
     req: RegisterRequest, res: Response, db: Session = Depends(get_session)
 ) -> User:
-    from sqlalchemy.exc import IntegrityError
 
     # Validate username is not empty
     if not req.username or not req.username.strip():

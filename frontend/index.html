@@ -2,7 +2,7 @@
 
 <head>
     <title>Aura</title>
-    <link rel="stylesheet" href="/static/index.css">
+    <link rel="stylesheet" href="/static/css/index.css">
     <script type="importmap">
     { "imports":
         {
@@ -13,9 +13,9 @@
         }
     }
   </script>
-    <script src="/static/modules/animator.js" type="module"></script>
-    <script src="/static/modules/communicator.js" type="module"></script>
-    <script src="/static/index.js" type="module"></script>
+    <script src="/static/assets/modules/animator.js" type="module"></script>
+    <script src="/static/assets/modules/communicator.js" type="module"></script>
+    <script src="/static/js/index.js" type="module"></script>
 </head>
 
 
@@ -25,19 +25,83 @@
         <div class="aura-ring"></div>
     </div>
 
-    <!-- avatar -->
-    <div id="avatar"></div>
+    <!-- Main Layout: 3 panels -->
+    <div id="app-layout">
+        <!-- Left Sidebar: Chat List -->
+        <div id="chat-sidebar">
+            <div class="sidebar-header">
+                <h2>Chats</h2>
+                <button id="new-chat-btn" class="icon-button" title="New Chat">+</button>
+            </div>
+            <div id="chat-list"></div>
+            <div class="sidebar-footer">
+                <div id="user-info"></div>
+                <button id="logout-btn" class="logout-button">Logout</button>
+            </div>
+        </div>
 
-    <!-- debug -->
-    <button id="chat-toggle">Debug</button>
-    <div id="chat-panel">
-        <div id="chat-messages"></div>
+        <!-- Center: Avatar & Controls -->
+        <div id="center-panel">
+            <div id="avatar"></div>
+            <div id="controls">
+                <button id="dial">Dial</button>
+                <button id="drop" hidden>Drop</button>
+            </div>
+        </div>
+
+        <!-- Right: Transcript Panel -->
+        <button id="transcript-toggle">Transcript</button>
+        <div id="transcript-panel">
+            <div class="transcript-header">
+                <h3>Conversation</h3>
+            </div>
+            <div id="transcript-messages"></div>
+        </div>
     </div>
 
-    <!-- controls -->
-    <div id="controls">
-        <button id="dial">Dial</button>
-        <button id="drop" hidden>Drop</button>
+    <!-- Character Creation Modal -->
+    <div id="character-modal" class="modal" hidden>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Character</h2>
+                <button id="modal-close" class="close-button">&times;</button>
+            </div>
+            <form id="character-form">
+                <div class="form-group">
+                    <label for="char-name">Character Name</label>
+                    <input type="text" id="char-name" required placeholder="e.g., Aura">
+                </div>
+                <div class="form-group">
+                    <label for="char-voice">Voice</label>
+                    <select id="char-voice" required>
+                        <option value="af_bella">Bella (Female)</option>
+                        <option value="am_fenrir">Fenrir (Male)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="char-face">Avatar Face</label>
+                    <select id="char-face" required>
+                        <option value="julia">Julia</option>
+                        <option value="david">David</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="char-prompt">System Prompt</label>
+                    <textarea id="char-prompt" required rows="4" placeholder="You are a helpful assistant..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="char-llm">LLM Model</label>
+                    <select id="char-llm" required>
+                        <option value="tiny-llama-ed">Empathetic Dialogue</option>
+                        <option value="tiny-llama-cs">Customer Service</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancel-btn" class="secondary-button">Cancel</button>
+                    <button type="submit" class="primary-button">Create</button>
+                </div>
+            </form>
+        </div>
     </div>
 </body>
 

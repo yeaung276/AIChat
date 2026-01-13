@@ -3,14 +3,15 @@ import yaml
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
 from sqlmodel import SQLModel
-from fastapi.responses import FileResponse
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
-from aichat.routes import chatRouter, userRouter
-from aichat.pipeline.factory import ModelFactory
 from aichat.db_models.db import engine
+from aichat.pipeline.factory import ModelFactory
+from aichat.routes import chatRouter, userRouter
+from aichat.security.auth import get_current_user
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -33,10 +34,18 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(chatRouter)
 app.include_router(userRouter)
-app.mount("/static", StaticFiles(directory="frontend"), name="static")
+app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 
 
 @app.get("/")
 async def index():
     return FileResponse("frontend/index.html")
+
+@app.get("/login")
+async def login_page():
+    return FileResponse("frontend/login.html")
+
+@app.get("/register")
+async def register_page():
+    return FileResponse("frontend/register.html")
 

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Aura - Register</title>
+    <link rel="stylesheet" href="/static/css/auth.css">
+    <script src="/static/js/register.js" type="module"></script>
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1 class="auth-title">Join Aura</h1>
+            <p class="auth-subtitle">Create your account</p>
+
+            <form id="register-form" class="auth-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        required
+                        autocomplete="username"
+                        placeholder="Choose a username"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="name">Display Name</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        required
+                        autocomplete="name"
+                        placeholder="Enter your display name"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="bio">Bio (Optional)</label>
+                    <textarea
+                        id="bio"
+                        name="bio"
+                        rows="3"
+                        placeholder="Tell us about yourself"
+                    ></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        autocomplete="new-password"
+                        placeholder="Choose a password"
+                    >
+                </div>
+
+                <div id="error-message" class="error-message" hidden></div>
+
+                <button type="submit" class="auth-button" id="submit-btn">
+                    Create Account
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Already have an account? <a href="/login">Sign in</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading" class="loading-overlay" hidden>
+        <div class="aura-ring"></div>
+    </div>
+</body>
+
+</html>

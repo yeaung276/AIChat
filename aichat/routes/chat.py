@@ -21,7 +21,7 @@ conn_mg = ConnectionManager()
 
 @router.websocket("/ws")
 async def sdp_exchange(
-    ws: WebSocket, user=Depends(get_current_user), db:Session = Depends(get_session)
+    ws: WebSocket, user=Depends(get_current_user), db: Session = Depends(get_session)
 ):
     await ws.accept()
 
@@ -31,20 +31,20 @@ async def sdp_exchange(
 
             if data.get("type") == MESSAGE_TYPE_SDP_OFFER:
                 if not data.get("chat_id"):
-                    await ws.send_json({
-                        "type": "error",
-                        "message": "chat_id is required."
-                    })
+                    await ws.send_json(
+                        {"type": "error", "message": "chat_id is required."}
+                    )
                     continue
-                
-                chat = db.exec(select(Chat).where(Chat.id == data.get("chat_id")).where(Chat.user_id == user.id)).first()
+
+                chat = db.exec(
+                    select(Chat)
+                    .where(Chat.id == data.get("chat_id"))
+                    .where(Chat.user_id == user.id)
+                ).first()
                 if not chat:
-                    await ws.send_json({
-                        "type": "error",
-                        "message": "chat not found."
-                    })
+                    await ws.send_json({"type": "error", "message": "chat not found."})
                     continue
-                
+
                 logging.info("accepting sdp offer and initializing chat ...")
 
                 answer = await conn_mg.register(chat, ws, data["sdp"])
@@ -57,11 +57,9 @@ async def sdp_exchange(
                 continue
             else:
                 logging.warning("Unrecognized message type: %s", data.get("type"))
-                await ws.send_json({
-                    "type": "error",
-                    "message": "Unrecognized message type."
-                })
-                
+                await ws.send_json(
+                    {"type": "error", "message": "Unrecognized message type."}
+                )
 
     except Exception as e:
         logging.error(e)

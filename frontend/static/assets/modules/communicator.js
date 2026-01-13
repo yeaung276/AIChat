@@ -17,7 +17,7 @@ class Communicator {
   async setup() {
     return new Promise((resolve, reject) => {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      this.ws = new WebSocket(`${protocol}//${window.location.host}/ws/sdp`);
+      this.ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
 
       this.ws.onerror = (error) => {
         console.error("WebSocket error:", error);
@@ -36,10 +36,15 @@ class Communicator {
   }
 
   async start(
-    onSpeechSpeak = () => null, 
-    onSpeechInterrupt = () => null, 
+    chatId,
+    onSpeechSpeak = () => null,
+    onSpeechInterrupt = () => null,
     onSpeechDebug = () => null
   ) {
+    if (!chatId) {
+      throw new Error("Chat ID is required");
+    }
+
     this.onSpeechSpeak = onSpeechSpeak;
     this.onSpeechInterrupt = onSpeechInterrupt;
     this.onSpeechDebug = onSpeechDebug
@@ -65,6 +70,7 @@ class Communicator {
         JSON.stringify({
           type: MESSAGE_TYPE_SDP_OFFER,
           sdp: offer.sdp,
+          chat_id: chatId,
         })
       );
 

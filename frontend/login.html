@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Aura - Login</title>
+    <link rel="stylesheet" href="/static/css/auth.css">
+    <script src="/static/js/login.js" type="module"></script>
+</head>
+
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <h1 class="auth-title">Welcome to Aura</h1>
+            <p class="auth-subtitle">Sign in to continue</p>
+
+            <form id="login-form" class="auth-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        required
+                        autocomplete="username"
+                        placeholder="Enter your username"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        autocomplete="current-password"
+                        placeholder="Enter your password"
+                    >
+                </div>
+
+                <div id="error-message" class="error-message" hidden></div>
+
+                <button type="submit" class="auth-button" id="submit-btn">
+                    Sign In
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <p>Don't have an account? <a href="/register">Sign up</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading" class="loading-overlay" hidden>
+        <div class="aura-ring"></div>
+    </div>
+</body>
+
+</html>
