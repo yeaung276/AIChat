@@ -15,7 +15,7 @@ from aichat.security.auth import (
 )
 
 
-router = APIRouter()
+router = APIRouter(prefix="/api")
 
 
 @router.post("/login")

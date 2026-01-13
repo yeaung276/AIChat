@@ -1,18 +1,45 @@
 speech:
-- name: zipformer
-  path: "aichat.components.stt.zipformer:ZipformerSTT"
+# - name: zipformer
+#   path: "aichat.components.stt.zipformer:ZipformerSTT"
+#   config:
+#     sample_rate: 16000
+#     model_dir: "models/zipformer"
+#     device: "cpu"
+- name: dummy
+  path: "aichat.components.stt.dummy:DummySTT"
   config:
-    sample_rate: 16000
-    model_dir: "models/zipformer"
-    device: "cpu"
 
 llm:
-- name: tiny_llama
+# - name: tiny_llama
+#   config:
+- name: dummy
+  path: "aichat.components.llm.dummy:DummyLLM"
   config:
 
 video:
-- name: deepface
+# - name: deepface
+#   path: 
+#   config:
+#     sample_rate: 5 # frame per second
+#     decay_rate: 7
+- name: dummy
+  path: "aichat.components.video.dummy:DummyVideoAnalyzer"
   config:
-    sample_rate: 5 # frame per second
-    decay_rate: 7
+
+avatars:
+  faces:
+    - name: julia
+      path: /static/assets/avatars/julia.glb
+      gender: F
+      mode: neutral
+    - name: david
+      path: /static/assets/avatars/julia.glb
+      gender: M
+      mode: neutral
+  voices:
+    - name: af_bella
+      path: /static/assets/voices/af_bella.bin
+    - name: am_fenrir
+      path: /static/assets/voices/af_bella.bin
+
       

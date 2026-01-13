@@ -1,8 +1,9 @@
 const MESSAGE_TYPE_SDP_ANSWER = "SDP_ANSWER";
-const MESSAGE_TYPE_SDP_OFFER = "SDP_OFFER"
-const MESSAGE_TYPE_SPEECH_SPEAK = "SPEECH_SPEAK";
-const MESSAGE_TYPE_SPEECH_INTERRUPT = "SPEECH_INTERRUPT";
-const MESSAGE_TYPE_SPEECH_DEBUG = "SPEECH_DEBUG"
+const MESSAGE_TYPE_SDP_OFFER = "SDP_OFFER";
+const MESSAGE_TYPE_AVATAR_INITIALIZE = "AVATAR_INITIALIZE";
+const MESSAGE_TYPE_AVATAR_SPEAK = "AVATAR_SPEAK";
+const MESSAGE_TYPE_AVATAR_INTERRUPT = "AVATAR_INTERRUPT";
+const MESSAGE_TYPE_TRANSCRIPT = "SPEECH_TRANSCRIPT"
 
 const ICE_CONFIG = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -10,14 +11,16 @@ const ICE_CONFIG = {
 
 class Communicator {
   constructor() {
-    this.onSpeechSpeak = () => null;
-    this.onSpeechInterrupt = () => null;
+    this.onAvatarSpeak = () => null;
+    this.onAvatarInterrupt = () => null;
+    this.onAvatarInitialize = () => null;
+    this.onTranscript = () => null;
   }
 
   async setup() {
     return new Promise((resolve, reject) => {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      this.ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+      this.ws = new WebSocket(`${protocol}//${window.location.host}/api/ws`);
 
       this.ws.onerror = (error) => {
         console.error("WebSocket error:", error);
@@ -37,17 +40,19 @@ class Communicator {
 
   async start(
     chatId,
-    onSpeechSpeak = () => null,
-    onSpeechInterrupt = () => null,
-    onSpeechDebug = () => null
+    onAvatarInitialize = () => null,
+    onAvatarSpeak = () => null,
+    onAvatarInterrupt = () => null,
+    onTranscript = () => null
   ) {
     if (!chatId) {
       throw new Error("Chat ID is required");
     }
 
-    this.onSpeechSpeak = onSpeechSpeak;
-    this.onSpeechInterrupt = onSpeechInterrupt;
-    this.onSpeechDebug = onSpeechDebug
+    this.onAvatarInitialize = onAvatarInitialize;
+    this.onAvatarSpeak = onAvatarSpeak;
+    this.onAvatarInterrupt = onAvatarInterrupt;
+    this.onTranscript = onTranscript;
 
     this.rtc = new RTCPeerConnection(ICE_CONFIG);
 
@@ -94,14 +99,14 @@ class Communicator {
     if (this.localStreams) {
       this.localStreams.getTracks().forEach((track) => track.stop());
     }
-    this.onSpeechDebug = null
-    this.onSpeechInterrupt = null
-    this.onSpeechSpeak = null
+    this.onTranscript = null;
+    this.onAvatarInterrupt = null;
+    this.onAvatarSpeak = null;
+    this.onAvatarInitialize = null;
   }
 
   async handleWSMessage(event) {
     const message = JSON.parse(event.data);
-    console.log("Received message:", message.type);
 
     if (message.type === MESSAGE_TYPE_SDP_ANSWER) {
       await this.rtc.setRemoteDescription(
@@ -109,16 +114,20 @@ class Communicator {
       );
     }
 
-    if (message.type === MESSAGE_TYPE_SPEECH_SPEAK) {
-      this.onSpeechSpeak && this.onSpeechSpeak(message.data);
+    if (message.type == MESSAGE_TYPE_AVATAR_INITIALIZE) {
+      this.onAvatarInitialize && this.onAvatarInitialize(message.data);
+    }
+    
+    if (message.type === MESSAGE_TYPE_AVATAR_SPEAK) {
+      this.onAvatarSpeak && this.onAvatarSpeak(message.data);
     }
 
-    if (message.type === MESSAGE_TYPE_SPEECH_INTERRUPT) {
-      this.onSpeechInterrupt && this.onSpeechInterrupt(message.data);
+    if (message.type === MESSAGE_TYPE_AVATAR_INTERRUPT) {
+      this.onAvatarInterrupt && this.onAvatarInterrupt(message.data);
     }
 
-    if (message.type == MESSAGE_TYPE_SPEECH_DEBUG){
-      this.onSpeechDebug && this.onSpeechDebug(message.data)
+    if (message.type == MESSAGE_TYPE_TRANSCRIPT) {
+      this.onTranscript && this.onTranscript(message.data);
     }
   }
 }

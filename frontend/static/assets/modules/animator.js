@@ -4,10 +4,8 @@ import { TalkingHead } from "talkinghead";
 import { StyleTextToSpeech2Model, AutoTokenizer, Tensor } from "transformer";
 import { Language } from "../language/en-us.js";
 
-const AVATAR = "/static/avatars/julia.glb";
 const TTS_MODEL = "onnx-community/Kokoro-82M-v1.0-ONNX-timestamped";
-const TTS_DICTIONARY = "/static/dictionaries/en-us.txt";
-const TTS_VOICE = "/static/voices/af_bella.bin";
+const TTS_DICTIONARY = "/static/assets/dictionaries/en-us.txt";
 const TTS_STYLE_DIM = 256;
 const TTS_FRAME_RATE = 40;
 const TTS_DELTA_START = -10;
@@ -16,21 +14,16 @@ const TTS_SAMPLING_RATE = 24000;
 
 class HeadAnimator {
   constructor(node) {
-    this.node = node
+    this.node = node;
     this.head = new TalkingHead(node, {
       ttsEndpoint: "N/A",
       cameraView: "upper",
       mixerGainSpeech: 3,
       cameraRotateEnable: false,
     });
-    this.avatar = { url: AVATAR, body: "F", avatarMood: "neutral" }
   }
 
-  async setup(avatar) {
-    if(avatar){
-      this.avatar = avatar
-    }
-
+  async setup() {
     console.log(`loading styleTTS model...`);
     this.ttsModel = await StyleTextToSpeech2Model.from_pretrained(TTS_MODEL, {
       dtype: "fp32",
@@ -40,33 +33,38 @@ class HeadAnimator {
     console.log(`loading tokenizer...`);
     this.ttsTokenizer = await AutoTokenizer.from_pretrained(TTS_MODEL);
 
-    console.log(`loading voices...`);
-    const response = await fetch(TTS_VOICE);
-    if (!response.ok) {
-      console.error("fail to fetch voice.");
-      return;
-    }
-    this.ttsVoice = new Float32Array(await response.arrayBuffer());
-
     console.log(`loading languages...`);
     this.language = new Language();
     await this.language.loadDictionary(TTS_DICTIONARY);
   }
 
-  async start() {
-    console.log(`loading avatar...`);
-    this.node.style.display = 'block'
-    await this.head.showAvatar(this.avatar);
+  async start(avatar, voice) {
+    console.log(`loading avatar and voice...`);
+
+    const loadVoice = async () => {
+      const response = await fetch(voice.url);
+      if (!response.ok) {
+        console.error("fail to fetch voice.");
+        return;
+      }
+      this.ttsVoice = new Float32Array(await response.arrayBuffer());
+    };
+
+    const loadAvatar = async () => {
+      this.node.style.display = "block";
+      await this.head.showAvatar(avatar);
+    };
+
+    await Promise.all([loadVoice(), loadAvatar()]);
   }
 
-  async stop(){
-    console.log("stopping the avatar...")
-    this.node.style.display = 'none'
-    await this.head.stop()
+  async stop() {
+    console.log("stopping the avatar...");
+    this.node.style.display = "none";
+    await this.head.stop();
   }
 
   async speak(text, speed = 1) {
-    console.log(`speaking ${text}`)
     // phoneme and tokenization
     const { phonemes, metadata, silences } = this.language.generate(text);
     const { input_ids } = this.ttsTokenizer(phonemes.join(""), {

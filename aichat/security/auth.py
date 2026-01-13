@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from jose import jwt
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request, WebSocket
 
 from aichat.db_models.db import Session, get_session
 from aichat.db_models.user import User
@@ -34,14 +34,23 @@ def create_session_token(user_id: int) -> str:
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
 
-from fastapi import Request
-
-
 def get_current_user(
     request: Request,
     db: Session = Depends(get_session),
 ):
     token = request.cookies.get(SESSION_COOKIE_NAME)
+    return get_user_from_token(token, db)
+
+
+def get_current_user_ws(
+    ws: WebSocket,
+    db: Session = Depends(get_session),
+):
+    token = ws.cookies.get(SESSION_COOKIE_NAME)
+    return get_user_from_token(token, db)
+
+
+def get_user_from_token(token, db):
     if not token:
         raise HTTPException(status_code=401, detail="Not authenticated")
 

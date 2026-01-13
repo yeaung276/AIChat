@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
     with open(config_f, "r") as f:
         config = yaml.safe_load(f)
 
-    ModelFactory.configure(config)
+    await ModelFactory.configure(config)
     yield
 
 app = FastAPI(lifespan=lifespan)

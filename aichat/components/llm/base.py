@@ -1,6 +1,9 @@
 from typing import Protocol, Literal, AsyncGenerator
 
 class LLM(Protocol):
+    @classmethod
+    async def configure(cls, **kwargs): ...
+    
     def generate(self, text: str) -> AsyncGenerator[str, None]: ...
     
     async def warmup(self, text: str): ...

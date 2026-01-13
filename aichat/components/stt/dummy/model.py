@@ -4,8 +4,12 @@ from typing import Literal
 
 class DummySTT:
     """Generate a dummy string every 20 seconds."""
+    
+    @classmethod
+    async def configure(cls, **kwargs):
+        pass
 
-    def __init__(self, interval_sec: float = 20.0):
+    def __init__(self, interval_sec: float = 20.0, **kwargs):
         self.interval = interval_sec
         self._last_emit = 0.0
         self.sample_rate= 16_000

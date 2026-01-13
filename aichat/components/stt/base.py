@@ -2,5 +2,8 @@ from typing import Protocol, Literal
 
 class STT(Protocol):
     sample_rate: int
+    @classmethod
+    async def configure(cls, **kwargs): ...
+    
     async def accept(self, samples, sample_rate: int) -> None|str: ...
     

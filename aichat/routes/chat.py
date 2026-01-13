@@ -9,19 +9,19 @@ from fastapi.exceptions import HTTPException
 
 from aichat.db_models.chat import Chat
 from aichat.schemas.chat import ChatRequest
-from aichat.security.auth import get_current_user
+from aichat.security.auth import get_current_user, get_current_user_ws
 from aichat.db_models.db import get_session, Session
 from aichat.pipeline.manager import ConnectionManager
 from aichat.types import MESSAGE_TYPE_SDP_ANSWER, MESSAGE_TYPE_SDP_OFFER
 
 
-router = APIRouter()
+router = APIRouter(prefix="/api")
 conn_mg = ConnectionManager()
 
 
 @router.websocket("/ws")
 async def sdp_exchange(
-    ws: WebSocket, user=Depends(get_current_user), db: Session = Depends(get_session)
+    ws: WebSocket, user=Depends(get_current_user_ws), db: Session = Depends(get_session)
 ):
     await ws.accept()
 
@@ -47,7 +47,7 @@ async def sdp_exchange(
 
                 logging.info("accepting sdp offer and initializing chat ...")
 
-                answer = await conn_mg.register(chat, ws, data["sdp"])
+                answer = await conn_mg.register(chat, data["sdp"], ws=ws, db=db)
                 await ws.send_json(
                     {
                         "type": MESSAGE_TYPE_SDP_ANSWER,

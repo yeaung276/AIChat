@@ -50,7 +50,7 @@ window.onload = async () => {
 // Init functions
 async function checkAuth() {
   try {
-    const response = await fetch("/me");
+    const response = await fetch("/api/me");
     if (!response.ok) return null;
     return await response.json();
   } catch (error) {
@@ -61,7 +61,7 @@ async function checkAuth() {
 
 async function loadChats() {
   try {
-    const response = await fetch("/chats");
+    const response = await fetch("/api/chats");
     if (!response.ok) throw new Error("Failed to load chats");
 
     chats = await response.json();
@@ -114,7 +114,7 @@ function renderChats() {
 // Logout
 logoutBtn.addEventListener("click", async () => {
   // Clear session and redirect
-  document.cookie = "session_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   window.location.href = "/login";
 });
 
@@ -133,7 +133,7 @@ function selectChat(chat) {
 
 async function loadTranscript(chat) {
   try {
-    const response = await fetch(`/chat/${chat.id}`);
+    const response = await fetch(`/api/chat/${chat.id}`);
     if (!response.ok) throw new Error("Failed to load transcript");
 
     const chatData = await response.json();
@@ -162,24 +162,26 @@ dialBtn.addEventListener("click", async () => {
   try {
     await communicator.start(
       currentChat.id,
-      async (message) => {
-        const startTime = performance.now();
-        await animator.speak(message);
-        const endTime = performance.now();
-
-        pushMessage(message, "left", { s: `${Math.round(endTime - startTime)}ms` });
-      },
-      () => {
-        console.log("speech interrupted");
-      },
-      (data) => {
-        if (data.actor === "user") {
-          pushMessage(data.message, "right");
-        }
-      }
+      async (data) =>
+        animator.start(
+          {
+            url: data.avatar.url,
+            body: data.avatar.gender,
+            avatarMood: data.avatar.mode,
+          },
+          {
+            url: data.voice.path,
+          }
+        ),
+      async (data) => animator.speak(data.text),
+      () => console.log("interrupted"),
+      (data) =>
+        pushMessage(
+          data.message,
+          data.actor == "user" ? "right" : "left"
+        )
     );
 
-    await animator.start();
     toggleControl("dialing");
     removeLoading();
     console.log("ready.");
@@ -189,7 +191,6 @@ dialBtn.addEventListener("click", async () => {
     alert("Failed to start conversation: " + error.message);
   }
 });
-
 
 dropBtn.addEventListener("click", async () => {
   await communicator.stop();
@@ -232,7 +233,7 @@ characterForm.addEventListener("submit", async (e) => {
   }
 
   try {
-    const response = await fetch("/chat", {
+    const response = await fetch("/api/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
