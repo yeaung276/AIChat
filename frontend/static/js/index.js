@@ -26,6 +26,9 @@ let chats = [];
 // Initialize app
 window.onload = async () => {
   try {
+    // Hide dial button initially until a chat is selected
+    dialBtn.hidden = true;
+
     currentUser = await checkAuth();
     if (!currentUser) {
       window.location.href = "/login";
@@ -96,9 +99,8 @@ function renderChats() {
 
     const preview = document.createElement("div");
     preview.className = "chat-item-preview";
-    preview.textContent = chat.transcripts?.length
-      ? `${chat.transcripts.length} messages`
-      : "No messages yet";
+    preview.textContent = chat.prompt || "No bio";
+    preview.setAttribute("data-tooltip", chat.prompt || "No bio"); // Tooltip on hover
 
     item.appendChild(name);
     item.appendChild(preview);
@@ -126,6 +128,9 @@ transcriptBtn.addEventListener("click", () => {
 function selectChat(chat) {
   currentChat = chat;
   renderChats();
+
+  // Show dial button when chat is selected
+  dialBtn.hidden = false;
 
   // Load transcript
   loadTranscript(chat);
