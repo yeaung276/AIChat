@@ -23,7 +23,7 @@ class TestWebSocketSdpExchange:
         """Should accept SDP offer, register connection, and return SDP answer."""
         # Create user and chat
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "wsuser",
                 "password": "password123",
@@ -34,13 +34,14 @@ class TestWebSocketSdpExchange:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         chat_response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "agent": {
                     "voice": "af_bella",
                     "face": "julia",
                     "prompt": "Test chat"
                 },
+                "name": 'test',
                 "dialogue": "tiny_llama"
             },
             cookies=cookies
@@ -81,8 +82,8 @@ class TestWebSocketSdpExchange:
             assert mock_register.call_count == 1
             call_args = mock_register.call_args
             assert call_args[0][0].id == chat_id
-            assert call_args[0][1] == mock_websocket
-            assert call_args[0][2] == "test_offer_sdp"
+            assert call_args[0][1] == "test_offer_sdp"
+            assert call_args[1]["ws"] == mock_websocket
 
             # Verify answer was sent back
             mock_websocket.send_json.assert_called_once_with({
@@ -95,7 +96,7 @@ class TestWebSocketSdpExchange:
         """Should return error when chat_id is missing."""
         # Create user
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "nochatid",
                 "password": "password123",
@@ -131,7 +132,7 @@ class TestWebSocketSdpExchange:
         """Should return error when chat does not exist."""
         # Create user
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "chatnotfound",
                 "password": "password123",
@@ -168,7 +169,7 @@ class TestWebSocketSdpExchange:
         """Should return error when user tries to access another user's chat."""
         # Create first user and their chat
         user1_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "owner",
                 "password": "password123",
@@ -179,13 +180,14 @@ class TestWebSocketSdpExchange:
         cookies1 = {SESSION_COOKIE_NAME: user1_response.cookies[SESSION_COOKIE_NAME]}
 
         chat_response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "agent": {
                     "voice": "af_bella",
                     "face": "julia",
                     "prompt": "Owner's chat"
                 },
+                "name": "test",
                 "dialogue": "tiny_llama"
             },
             cookies=cookies1
@@ -194,7 +196,7 @@ class TestWebSocketSdpExchange:
 
         # Create second user (intruder)
         user2_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "intruder",
                 "password": "password123",
@@ -231,7 +233,7 @@ class TestWebSocketSdpExchange:
         """Should return error for unrecognized message types."""
         # Create user
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "unrecognized",
                 "password": "password123",
@@ -267,7 +269,7 @@ class TestWebSocketSdpExchange:
         """Should handle exceptions from ConnectionManager gracefully."""
         # Create user and chat
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "exception",
                 "password": "password123",
@@ -278,13 +280,14 @@ class TestWebSocketSdpExchange:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         chat_response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "agent": {
                     "voice": "af_bella",
                     "face": "julia",
                     "prompt": "Test chat"
                 },
+                "name": "test",
                 "dialogue": "tiny_llama"
             },
             cookies=cookies

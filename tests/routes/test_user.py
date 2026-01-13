@@ -20,7 +20,7 @@ class TestUserRegistration:
     def test_register_creates_user_successfully(self, test_client, test_db):
         """Should create new user and return user data with session cookie."""
         response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "testuser",
                 "password": "password123",
@@ -49,7 +49,7 @@ class TestUserRegistration:
     def test_register_with_optional_bio(self, test_client, test_db):
         """Should create user without bio field."""
         response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "nobiouser",
                 "password": "password123",
@@ -71,7 +71,7 @@ class TestUserRegistration:
     def test_register_hashes_password(self, test_client, test_db):
         """Should hash password before storing."""
         response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "secureuser",
                 "password": "plaintext_password",
@@ -91,7 +91,7 @@ class TestUserRegistration:
     def test_register_sets_session_cookie(self, test_client):
         """Should set session cookie with proper attributes."""
         response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "cookieuser",
                 "password": "password123",
@@ -109,7 +109,7 @@ class TestUserRegistration:
         """Should handle duplicate username gracefully."""
         # Create first user
         test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "duplicate",
                 "password": "password123",
@@ -120,7 +120,7 @@ class TestUserRegistration:
 
         # Try to create duplicate - should fail with database integrity error
         response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "duplicate",
                 "password": "different_password",
@@ -140,7 +140,7 @@ class TestUserLogin:
         """Should authenticate user and return user data with session cookie."""
         # First register a user
         test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "loginuser",
                 "password": "password123",
@@ -151,7 +151,7 @@ class TestUserLogin:
 
         # Now login
         response = test_client.post(
-            "/login",
+            "/api/login",
             json={
                 "username": "loginuser",
                 "password": "password123"
@@ -169,7 +169,7 @@ class TestUserLogin:
     def test_login_with_invalid_username(self, test_client):
         """Should return 401 for non-existent user."""
         response = test_client.post(
-            "/login",
+            "/api/login",
             json={
                 "username": "nonexistent",
                 "password": "password123"
@@ -183,7 +183,7 @@ class TestUserLogin:
         """Should return 401 for incorrect password."""
         # Register user
         test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "wrongpwd",
                 "password": "correct_password",
@@ -194,7 +194,7 @@ class TestUserLogin:
 
         # Try to login with wrong password
         response = test_client.post(
-            "/login",
+            "/api/login",
             json={
                 "username": "wrongpwd",
                 "password": "wrong_password"
@@ -208,7 +208,7 @@ class TestUserLogin:
         """Should create session token that can be used for authentication."""
         # Register and login
         test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "tokenuser",
                 "password": "password123",
@@ -218,7 +218,7 @@ class TestUserLogin:
         )
 
         login_response = test_client.post(
-            "/login",
+            "/api/login",
             json={
                 "username": "tokenuser",
                 "password": "password123"
@@ -238,7 +238,7 @@ class TestGetCurrentUser:
         """Should return current user data when authenticated."""
         # Register user
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "meuser",
                 "password": "password123",
@@ -251,7 +251,7 @@ class TestGetCurrentUser:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         # Access /me endpoint
-        response = test_client.get("/me", cookies=cookies)
+        response = test_client.get("/api/me", cookies=cookies)
 
         assert response.status_code == 200
         data = response.json()
@@ -261,7 +261,7 @@ class TestGetCurrentUser:
 
     def test_me_requires_authentication(self, test_client):
         """Should return 401 when not authenticated."""
-        response = test_client.get("/me")
+        response = test_client.get("/api/me")
 
         assert response.status_code == 401
         assert response.json()["detail"] == "Not authenticated"
@@ -269,7 +269,7 @@ class TestGetCurrentUser:
     def test_me_with_invalid_session(self, test_client):
         """Should return 401 for invalid session token."""
         cookies = {SESSION_COOKIE_NAME: "invalid_token_here"}
-        response = test_client.get("/me", cookies=cookies)
+        response = test_client.get("/api/me", cookies=cookies)
 
         assert response.status_code == 401
         assert response.json()["detail"] == "Invalid session"
@@ -284,7 +284,7 @@ class TestGetCurrentUser:
 
         # Register a user first
         test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "expireduser",
                 "password": "password123",
@@ -307,7 +307,7 @@ class TestGetCurrentUser:
         )
 
         cookies = {SESSION_COOKIE_NAME: expired_token}
-        response = test_client.get("/me", cookies=cookies)
+        response = test_client.get("/api/me", cookies=cookies)
 
         assert response.status_code == 401
 
@@ -319,7 +319,7 @@ class TestAuthenticationFlow:
         """Should complete full registration and authentication flow."""
         # Register
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "fullflowuser",
                 "password": "password123",
@@ -333,7 +333,7 @@ class TestAuthenticationFlow:
 
         # Access protected endpoint with session
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
-        me_response = test_client.get("/me", cookies=cookies)
+        me_response = test_client.get("/api/me", cookies=cookies)
 
         assert me_response.status_code == 200
         assert me_response.json()["username"] == "fullflowuser"
@@ -342,7 +342,7 @@ class TestAuthenticationFlow:
         """Should complete full login and authentication flow."""
         # Register user first
         test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "loginflowuser",
                 "password": "password123",
@@ -353,7 +353,7 @@ class TestAuthenticationFlow:
 
         # Login
         login_response = test_client.post(
-            "/login",
+            "/api/login",
             json={
                 "username": "loginflowuser",
                 "password": "password123"
@@ -365,7 +365,7 @@ class TestAuthenticationFlow:
 
         # Access protected endpoint
         cookies = {SESSION_COOKIE_NAME: login_response.cookies[SESSION_COOKIE_NAME]}
-        me_response = test_client.get("/me", cookies=cookies)
+        me_response = test_client.get("/api/me", cookies=cookies)
 
         assert me_response.status_code == 200
         assert me_response.json()["username"] == "loginflowuser"
@@ -374,7 +374,7 @@ class TestAuthenticationFlow:
         """Should maintain session across multiple requests."""
         # Register
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "persistuser",
                 "password": "password123",
@@ -386,9 +386,9 @@ class TestAuthenticationFlow:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         # Make multiple requests with same session
-        response1 = test_client.get("/me", cookies=cookies)
-        response2 = test_client.get("/me", cookies=cookies)
-        response3 = test_client.get("/me", cookies=cookies)
+        response1 = test_client.get("/api/me", cookies=cookies)
+        response2 = test_client.get("/api/me", cookies=cookies)
+        response3 = test_client.get("/api/me", cookies=cookies)
 
         assert response1.status_code == 200
         assert response2.status_code == 200
@@ -404,7 +404,7 @@ class TestRequestValidation:
     def test_register_with_missing_username(self, test_client):
         """Should return 422 when username is missing."""
         response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "password": "password123",
                 "name": "Test User",
@@ -417,7 +417,7 @@ class TestRequestValidation:
     def test_register_with_missing_password(self, test_client):
         """Should return 422 when password is missing."""
         response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "testuser",
                 "name": "Test User",
@@ -430,7 +430,7 @@ class TestRequestValidation:
     def test_register_with_missing_name(self, test_client):
         """Should return 422 when name is missing."""
         response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "testuser",
                 "password": "password123",
@@ -443,7 +443,7 @@ class TestRequestValidation:
     def test_login_with_missing_username(self, test_client):
         """Should return 422 when username is missing."""
         response = test_client.post(
-            "/login",
+            "/api/login",
             json={"password": "password123"}
         )
 
@@ -452,7 +452,7 @@ class TestRequestValidation:
     def test_login_with_missing_password(self, test_client):
         """Should return 422 when password is missing."""
         response = test_client.post(
-            "/login",
+            "/api/login",
             json={"username": "testuser"}
         )
 
@@ -460,13 +460,13 @@ class TestRequestValidation:
 
     def test_login_with_empty_body(self, test_client):
         """Should return 422 for empty request body."""
-        response = test_client.post("/login", json={})
+        response = test_client.post("/api/login", json={})
 
         assert response.status_code == 422
 
     def test_register_with_empty_body(self, test_client):
         """Should return 422 for empty request body."""
-        response = test_client.post("/register", json={})
+        response = test_client.post("/api/register", json={})
 
         assert response.status_code == 422
 
@@ -477,7 +477,7 @@ class TestEdgeCases:
     def test_register_with_empty_username(self, test_client):
         """Should handle empty string username."""
         response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "",
                 "password": "password123",
@@ -492,7 +492,7 @@ class TestEdgeCases:
     def test_register_with_empty_password(self, test_client):
         """Should handle empty string password."""
         response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "emptypwduser",
                 "password": "",
@@ -509,7 +509,7 @@ class TestEdgeCases:
         """Should allow login after multiple failed attempts."""
         # Register user
         test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "retryuser",
                 "password": "correct_password",
@@ -521,7 +521,7 @@ class TestEdgeCases:
         # Failed attempts
         for _ in range(3):
             response = test_client.post(
-                "/login",
+                "/api/login",
                 json={
                     "username": "retryuser",
                     "password": "wrong_password"
@@ -531,7 +531,7 @@ class TestEdgeCases:
 
         # Successful attempt
         response = test_client.post(
-            "/login",
+            "/api/login",
             json={
                 "username": "retryuser",
                 "password": "correct_password"
@@ -542,7 +542,7 @@ class TestEdgeCases:
     def test_register_with_special_characters_in_username(self, test_client, test_db):
         """Should handle special characters in username."""
         response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "user@test.com",
                 "password": "password123",
@@ -558,7 +558,7 @@ class TestEdgeCases:
         """Should handle very long bio text."""
         long_bio = "A" * 10000
         response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "longbiouser",
                 "password": "password123",

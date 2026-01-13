@@ -20,7 +20,7 @@ class TestCreateChat:
         """Should create new chat and return chat data."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "chatuser",
                 "password": "password123",
@@ -28,11 +28,12 @@ class TestCreateChat:
                 "bio": None
             }
         )
+
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         # Create chat
         response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "agent": {
                     "voice": "af_bella",
@@ -66,7 +67,7 @@ class TestCreateChat:
         """Should create chat with empty prompt."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "emptypromptuser",
                 "password": "password123",
@@ -77,7 +78,7 @@ class TestCreateChat:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "name": "test_name",
                 "agent": {
@@ -96,7 +97,7 @@ class TestCreateChat:
     def test_create_chat_requires_authentication(self, test_client):
         """Should return 401 when not authenticated."""
         response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "agent": {
                     "voice": "af_bella",
@@ -113,7 +114,7 @@ class TestCreateChat:
         """Should return 401 for invalid session token."""
         cookies = {SESSION_COOKIE_NAME: "invalid_token_here"}
         response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "agent": {
                     "voice": "af_bella",
@@ -131,7 +132,7 @@ class TestCreateChat:
         """Should allow creating multiple chats for the same user."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "multichatsuser",
                 "password": "password123",
@@ -144,7 +145,7 @@ class TestCreateChat:
 
         # Create first chat
         response1 = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "name": "test_name",
                 "agent": {
@@ -158,7 +159,7 @@ class TestCreateChat:
 
         # Create second chat
         response2 = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "name": "test_name_2",
                 "agent": {
@@ -186,7 +187,7 @@ class TestGetChats:
         """Should return all chats for authenticated user."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "getchatsuser",
                 "password": "password123",
@@ -198,7 +199,7 @@ class TestGetChats:
 
         # Create multiple chats
         test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "name": "test1",
                 "agent": {
@@ -210,7 +211,7 @@ class TestGetChats:
             cookies=cookies
         )
         test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "name": "test2",
                 "agent": {
@@ -223,7 +224,7 @@ class TestGetChats:
         )
 
         # Get all chats
-        response = test_client.get("/chats", cookies=cookies)
+        response = test_client.get("/api/chats", cookies=cookies)
 
         assert response.status_code == 200
         data = response.json()
@@ -237,7 +238,7 @@ class TestGetChats:
         """Should return empty list when user has no chats."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "nochatsuser",
                 "password": "password123",
@@ -247,14 +248,14 @@ class TestGetChats:
         )
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
-        response = test_client.get("/chats", cookies=cookies)
+        response = test_client.get("/api/chats", cookies=cookies)
 
         assert response.status_code == 200
         assert response.json() == []
 
     def test_get_chats_requires_authentication(self, test_client):
         """Should return 401 when not authenticated."""
-        response = test_client.get("/chats")
+        response = test_client.get("/api/chats")
 
         assert response.status_code == 401
         assert response.json()["detail"] == "Not authenticated"
@@ -263,7 +264,7 @@ class TestGetChats:
         """Should only return chats belonging to authenticated user."""
         # Register first user
         register_response1 = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "user1",
                 "password": "password123",
@@ -275,7 +276,7 @@ class TestGetChats:
 
         # Create chat for first user
         test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "name": "test1",
                 "agent": {
@@ -289,7 +290,7 @@ class TestGetChats:
 
         # Register second user
         register_response2 = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "user2",
                 "password": "password123",
@@ -301,7 +302,7 @@ class TestGetChats:
 
         # Create chat for second user
         test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "name": "test2",
                 "agent": {
@@ -314,7 +315,7 @@ class TestGetChats:
         )
 
         # Get chats for second user
-        response = test_client.get("/chats", cookies=cookies2)
+        response = test_client.get("/api/chats", cookies=cookies2)
 
         assert response.status_code == 200
         data = response.json()
@@ -329,7 +330,7 @@ class TestGetChatById:
         """Should return specific chat by ID."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "getchatuser",
                 "password": "password123",
@@ -341,7 +342,7 @@ class TestGetChatById:
 
         # Create chat
         create_response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "name": "test",
                 "agent": {
@@ -355,7 +356,7 @@ class TestGetChatById:
         chat_id = create_response.json()["id"]
 
         # Get chat by ID
-        response = test_client.get(f"/chat/{chat_id}", cookies=cookies)
+        response = test_client.get(f"/api/chat/{chat_id}", cookies=cookies)
 
         assert response.status_code == 200
         data = response.json()
@@ -368,7 +369,7 @@ class TestGetChatById:
         """Should return 404 for non-existent chat."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "notfounduser",
                 "password": "password123",
@@ -379,14 +380,14 @@ class TestGetChatById:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         # Try to get non-existent chat
-        response = test_client.get("/chat/99999", cookies=cookies)
+        response = test_client.get("/api/chat/99999", cookies=cookies)
 
         assert response.status_code == 404
         assert response.json()["detail"] == "Chat not found."
 
     def test_get_chat_by_id_requires_authentication(self, test_client):
         """Should return 401 when not authenticated."""
-        response = test_client.get("/chat/1")
+        response = test_client.get("/api/chat/1")
 
         assert response.status_code == 401
         assert response.json()["detail"] == "Not authenticated"
@@ -395,7 +396,7 @@ class TestGetChatById:
         """Should return 404 when trying to access another user's chat."""
         # Register first user and create chat
         register_response1 = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "owner",
                 "password": "password123",
@@ -406,7 +407,7 @@ class TestGetChatById:
         cookies1 = {SESSION_COOKIE_NAME: register_response1.cookies[SESSION_COOKIE_NAME]}
 
         create_response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "name": "test",
                 "agent": {
@@ -421,7 +422,7 @@ class TestGetChatById:
 
         # Register second user
         register_response2 = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "intruder",
                 "password": "password123",
@@ -432,7 +433,7 @@ class TestGetChatById:
         cookies2 = {SESSION_COOKIE_NAME: register_response2.cookies[SESSION_COOKIE_NAME]}
 
         # Try to access first user's chat
-        response = test_client.get(f"/chat/{chat_id}", cookies=cookies2)
+        response = test_client.get(f"/api/chat/{chat_id}", cookies=cookies2)
 
         assert response.status_code == 404
         assert response.json()["detail"] == "Chat not found."
@@ -445,7 +446,7 @@ class TestRequestValidation:
         """Should return 422 when agent is missing."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "validationuser",
                 "password": "password123",
@@ -456,7 +457,7 @@ class TestRequestValidation:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={},
             cookies=cookies
         )
@@ -467,7 +468,7 @@ class TestRequestValidation:
         """Should use default voice when voice is missing."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "defaultvoiceuser",
                 "password": "password123",
@@ -478,7 +479,7 @@ class TestRequestValidation:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "name": 'test',
                 "agent": {
@@ -497,7 +498,7 @@ class TestRequestValidation:
         """Should use default face when face is missing."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "defaultfaceuser",
                 "password": "password123",
@@ -508,7 +509,7 @@ class TestRequestValidation:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "name": "test",
                 "agent": {
@@ -527,7 +528,7 @@ class TestRequestValidation:
         """Should use default empty prompt when prompt is missing."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "defaultpromptuser",
                 "password": "password123",
@@ -538,7 +539,7 @@ class TestRequestValidation:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "name": "test",
                 "agent": {
@@ -557,7 +558,7 @@ class TestRequestValidation:
         """Should return 422 for invalid chat ID format."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "invalidid",
                 "password": "password123",
@@ -567,7 +568,7 @@ class TestRequestValidation:
         )
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
-        response = test_client.get("/chat/invalid", cookies=cookies)
+        response = test_client.get("/api/chat/invalid", cookies=cookies)
 
         assert response.status_code == 422
 
@@ -579,7 +580,7 @@ class TestChatFlows:
         """Should complete full chat creation and retrieval flow."""
         # Register
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "flowuser",
                 "password": "password123",
@@ -591,7 +592,7 @@ class TestChatFlows:
 
         # Create chat
         create_response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "name": "test",
                 "agent": {
@@ -606,12 +607,12 @@ class TestChatFlows:
         chat_id = create_response.json()["id"]
 
         # Get all chats
-        list_response = test_client.get("/chats", cookies=cookies)
+        list_response = test_client.get("/api/chats", cookies=cookies)
         assert list_response.status_code == 200
         assert len(list_response.json()) == 1
 
         # Get specific chat
-        get_response = test_client.get(f"/chat/{chat_id}", cookies=cookies)
+        get_response = test_client.get(f"/api/chat/{chat_id}", cookies=cookies)
         assert get_response.status_code == 200
         assert get_response.json()["id"] == chat_id
         assert get_response.json()["prompt"] == "Flow test chat"
@@ -620,7 +621,7 @@ class TestChatFlows:
         """Should create multiple chats and list them all."""
         # Register
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "multichatuser",
                 "password": "password123",
@@ -634,7 +635,7 @@ class TestChatFlows:
         chat_ids = []
         for i in range(3):
             response = test_client.post(
-                "/chat",
+                "/api/chat",
                 json={
                     "name": "test",
                     "agent": {
@@ -649,7 +650,7 @@ class TestChatFlows:
             chat_ids.append(response.json()["id"])
 
         # List all chats
-        list_response = test_client.get("/chats", cookies=cookies)
+        list_response = test_client.get("/api/chats", cookies=cookies)
         assert list_response.status_code == 200
         chats = list_response.json()
         assert len(chats) == 3
@@ -666,7 +667,7 @@ class TestEdgeCases:
         """Should handle very long prompt text."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "longpromptuser",
                 "password": "password123",
@@ -678,7 +679,7 @@ class TestEdgeCases:
 
         long_prompt = "A" * 10000
         response = test_client.post(
-            "/chat",
+            "/api/chat",
             json={
                 "agent": {
                     "voice": "af_bella",
@@ -698,7 +699,7 @@ class TestEdgeCases:
         """Should handle chat ID of 0."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "zeroiduser",
                 "password": "password123",
@@ -708,7 +709,7 @@ class TestEdgeCases:
         )
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
-        response = test_client.get("/chat/0", cookies=cookies)
+        response = test_client.get("/api/chat/0", cookies=cookies)
 
         # Should return 404 as ID 0 typically doesn't exist
         assert response.status_code == 404
@@ -717,7 +718,7 @@ class TestEdgeCases:
         """Should handle negative chat ID."""
         # Register and get session
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "negativeiduser",
                 "password": "password123",
@@ -727,7 +728,7 @@ class TestEdgeCases:
         )
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
-        response = test_client.get("/chat/-1", cookies=cookies)
+        response = test_client.get("/api/chat/-1", cookies=cookies)
 
         # Should return 404 or 422
         assert response.status_code in [404, 422]
@@ -736,7 +737,7 @@ class TestEdgeCases:
         """Should maintain session across multiple chat operations."""
         # Register
         register_response = test_client.post(
-            "/register",
+            "/api/register",
             json={
                 "username": "persistchatuser",
                 "password": "password123",
@@ -748,17 +749,17 @@ class TestEdgeCases:
 
         # Multiple operations with same session
         create1 = test_client.post(
-            "/chat",
+            "/api/chat",
             json={"agent": {"voice": "af_bella", "face": "julia", "prompt": "Chat 1"}, "name": "test1"},
             cookies=cookies
         )
         create2 = test_client.post(
-            "/chat",
+            "/api/chat",
             json={"agent": {"voice": "af_bella", "face": "julia", "prompt": "Chat 2"}, "name": "test2"},
             cookies=cookies
         )
-        list_chats = test_client.get("/chats", cookies=cookies)
-        get_chat = test_client.get(f"/chat/{create1.json()['id']}", cookies=cookies)
+        list_chats = test_client.get("/api/chats", cookies=cookies)
+        get_chat = test_client.get(f"/api/chat/{create1.json()['id']}", cookies=cookies)
 
         assert create1.status_code == 200
         assert create2.status_code == 200
