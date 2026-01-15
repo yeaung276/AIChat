@@ -37,14 +37,11 @@ def formatting_prompts_func(sample):
 
     return {"text": text}
 
-raw = raw.map(
-    formatting_prompts_func,
-    remove_columns=raw.column_names,
-)
+raw = raw.map(formatting_prompts_func) # type: ignore
 
 # ---- SPLITS ----
 # 1) train (80%) / temp (20%)
-splits = raw.train_test_split(test_size=0.2, seed=42)
+splits = raw.train_test_split(test_size=0.2, seed=42) # type: ignore
 
 # 2) temp → dev (10%) / test (10%)
 temp_splits = splits["test"].train_test_split(test_size=0.5, seed=42)
