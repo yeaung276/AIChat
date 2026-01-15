@@ -7,3 +7,10 @@ uv run pytest --cov=aichat --cov-report=html tests/
 ## Viewing test
 open htmlcov/index.html
 
+# Development in docker
+`docker run`
+
+# Training
+### Dataset
+link: `https://www.kaggle.com/datasets/atharvjairath/empathetic-dialogues-facebook-ai/data`
+
