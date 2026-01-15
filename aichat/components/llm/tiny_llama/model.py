@@ -6,7 +6,7 @@ class TinyLLama:
     params: SamplingParams | None = None
 
     @classmethod
-    def configure(cls, model="TinyLlama/TinyLlama-1.1B-Chat-v1.0", temperature=0.7, max_token=512, device = 'cpu'):
+    def configure(cls, model="unsloth/tinyllama-chat-bnb-4bit", temperature=0.7, max_token=512, device = 'cpu'):
       engine_args = AsyncEngineArgs(
           model=model,
           max_model_len=max_token,
