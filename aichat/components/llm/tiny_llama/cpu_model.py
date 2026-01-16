@@ -25,7 +25,7 @@ class TinyLLamaCPU:
         cls.tokenizer = AutoTokenizer.from_pretrained(model)
         cls.model = AutoModelForCausalLM.from_pretrained(
             model,
-            torch_dtype=torch.float32,
+            dtype=torch.float32,
         ).to(device) # type: ignore
 
         cls.model.eval()
@@ -34,7 +34,7 @@ class TinyLLamaCPU:
             "max_new_tokens": max_token,
             "temperature": temperature,
             "do_sample": temperature > 0,
-            "pad_token_id": cls.tokenizer.eos_token_id,
+            "pad_token_id": cls.tokenizer.eos_token_id
         }
 
     async def generate(self, text: str) -> AsyncGenerator[str, None]:

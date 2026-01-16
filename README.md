@@ -16,3 +16,6 @@ link: `https://www.kaggle.com/datasets/atharvjairath/empathetic-dialogues-facebo
 
 ### Generate data
  uv run python -m training.data
+
+### Run evaluation
+uv run python -m experiments.evaluate_llm
