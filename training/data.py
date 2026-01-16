@@ -17,6 +17,48 @@ TRAIN_SIZE = 0.8
 TEST_SIZE = 0.1
 VAL_SIZE = 0.1
 
+fine_to_basic_emotion = {
+    # ANGER 🤬
+    "angry": "anger",
+    "furious": "anger",
+    "annoyed": "anger",
+    # DISGUST 🤢
+    "disgusted": "disgust",
+    "ashamed": "disgust",
+    "embarrassed": "disgust",
+    # FEAR 😨
+    "afraid": "fear",
+    "terrified": "fear",
+    "anxious": "fear",
+    "apprehensive": "fear",
+    # JOY 😀
+    "joyful": "joy",
+    "excited": "joy",
+    "proud": "joy",
+    "grateful": "joy",
+    "hopeful": "joy",
+    "content": "joy",
+    "impressed": "joy",
+    "confident": "joy",
+    "anticipating": "joy",
+    "prepared": "joy",
+    # SADNESS 😭
+    "sad": "sadness",
+    "lonely": "sadness",
+    "guilty": "sadness",
+    "disappointed": "sadness",
+    "devastated": "sadness",
+    "nostalgic": "sadness",
+    # SURPRISE 😲
+    "surprised": "surprise",
+    # NEUTRAL 😐
+    "sentimental": "neutral",
+    "faithful": "neutral",
+    "caring": "neutral",
+    "trusting": "neutral",
+    "jealous": "neutral",
+}
+
 
 def formatting_prompts_func(sample):
     dialogue = sample["empathetic_dialogues"]
@@ -27,15 +69,18 @@ def formatting_prompts_func(sample):
     text = (
         build_prompt(
             situation=sample["Situation"],
-            emotion=sample["emotion"],
+            emotion=fine_to_basic_emotion.get(sample["emotion"], ""),
             user=dialogue,
             agent=sample["labels"],
         )
         + tokenizer.eos_token
     )
 
-    return {"text": text, "empathetic_dialogues": dialogue}
-
+    return {
+        "text": text,
+        "empathetic_dialogues": dialogue,
+        "emotion": fine_to_basic_emotion.get(sample["emotion"], ""),
+    }
 
 
 # ======================= Core ================================
@@ -48,11 +93,18 @@ tokenizer = AutoTokenizer.from_pretrained(TOKENIZER, use_fast=True)
 logger.info("transforming data into prompt format...")
 raw = raw.map(formatting_prompts_func)  # type: ignore
 
-logger.info("splitting dataset with %d train, %d val and %d test size...", TRAIN_SIZE, VAL_SIZE, TEST_SIZE)
+logger.info(
+    "splitting dataset with %d train, %d val and %d test size...",
+    TRAIN_SIZE,
+    VAL_SIZE,
+    TEST_SIZE,
+)
 first_split = 1 - TRAIN_SIZE
 splits = raw.train_test_split(test_size=first_split, seed=42)  # type: ignore
 
-temp_splits = splits["test"].train_test_split(test_size=(TEST_SIZE/first_split), seed=42)
+temp_splits = splits["test"].train_test_split(
+    test_size=(TEST_SIZE / first_split), seed=42
+)
 
 train_dataset = splits["train"]
 dev_dataset = temp_splits["train"]
