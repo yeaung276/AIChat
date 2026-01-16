@@ -14,3 +14,5 @@ open htmlcov/index.html
 ### Dataset
 link: `https://www.kaggle.com/datasets/atharvjairath/empathetic-dialogues-facebook-ai/data`
 
+### Generate data
+ uv run python -m training.data

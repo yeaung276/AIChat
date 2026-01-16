@@ -7,7 +7,7 @@ Testing Strategy:
 import pytest
 import inspect
 
-from aichat.components.llm.tiny_llama_cpu.model import TinyLLama
+from aichat.components.llm.tiny_llama.cpu_model import TinyLLamaCPU
 
 
 class TestTinyLlamaConfigureMethod:
@@ -16,21 +16,21 @@ class TestTinyLlamaConfigureMethod:
     def test_configure_accepts_correct_parameters(self):
         """Should accept (model: str, temperature: float, max_token: int, device: str)."""
         # Use a real tiny model that exists
-        TinyLLama.configure(
+        TinyLLamaCPU.configure(
             model="hf-internal-testing/tiny-random-gpt2",
             temperature=0.5,
             max_token=256,
             device="cpu"
         )
 
-        assert TinyLLama.model is not None
-        assert TinyLLama.tokenizer is not None
-        assert TinyLLama.generation_kwargs is not None
+        assert TinyLLamaCPU.model is not None
+        assert TinyLLamaCPU.tokenizer is not None
+        assert TinyLLamaCPU.generation_kwargs is not None
 
     def test_configure_with_wrong_type_model(self):
         """Should handle wrong type for model parameter."""
         with pytest.raises(Exception):
-            TinyLLama.configure(
+            TinyLLamaCPU.configure(
                 model=123,  # type: ignore Wrong type
                 temperature=0.5,
                 max_token=256,
@@ -40,7 +40,7 @@ class TestTinyLlamaConfigureMethod:
     def test_configure_with_wrong_type_temperature(self):
         """Should handle wrong type for temperature parameter."""
         with pytest.raises(Exception):
-            TinyLLama.configure(
+            TinyLLamaCPU.configure(
                 model="test-model",
                 temperature="wrong",  # type: ignore Wrong type
                 max_token=256,
@@ -50,7 +50,7 @@ class TestTinyLlamaConfigureMethod:
     def test_configure_with_wrong_type_max_token(self):
         """Should handle wrong type for max_token parameter."""
         with pytest.raises(Exception):
-            TinyLLama.configure(
+            TinyLLamaCPU.configure(
                 model="test-model",
                 temperature=0.5,
                 max_token="wrong",  # type: ignore Wrong type
@@ -64,7 +64,7 @@ class TestTinyLlamaGenerateMethod:
     @pytest.mark.asyncio
     async def test_generate_accepts_string_returns_async_generator(self):
         """Should accept (text: str) and return AsyncGenerator[str, None]."""
-        instance = TinyLLama()
+        instance = TinyLLamaCPU()
 
         try:
             result = instance.generate("test input")
@@ -77,13 +77,13 @@ class TestTinyLlamaGenerateMethod:
     @pytest.mark.asyncio
     async def test_generate_with_wrong_type(self):
         """Should handle wrong type for text parameter."""
-        TinyLLama.configure(
+        TinyLLamaCPU.configure(
             model="hf-internal-testing/tiny-random-gpt2",
             temperature=0.5,
             max_token=10,
             device="cpu"
         )
-        instance = TinyLLama()
+        instance = TinyLLamaCPU()
 
         with pytest.raises(ValueError) as exc_info:
             result = instance.generate(123)  # type: ignore Wrong type
@@ -95,7 +95,7 @@ class TestTinyLlamaGenerateMethod:
     @pytest.mark.asyncio
     async def test_generate_when_not_configured(self):
         """Should raise exception when model not configured."""
-        instance = TinyLLama()
+        instance = TinyLLamaCPU()
         instance.model = None
         instance.tokenizer = None
 

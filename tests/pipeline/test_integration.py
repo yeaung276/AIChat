@@ -97,7 +97,7 @@ class TestProcessorIntegration:
             # Wait for LLM processing
             await asyncio.sleep(0.2)
 
-            # Verify real Memory was used and data persisted
+            # Verify Memory was used and data persisted
             assert len(mem.messages) == 2  # user + assistant
             assert mem.messages[0]["actor"] == "user"
             assert mem.messages[0]["message"] == "user said hello"
