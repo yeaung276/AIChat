@@ -81,15 +81,19 @@ class Processor:
     async def _read_llm_queue(self, queue: asyncio.Queue):
         while True:
             message = await queue.get()
-            await self.mem.add(actor="user", message=message)
+            try:
+                await self.mem.add(actor="user", message=message)
 
-            response = ""
-            async for resp in self.llm.generate(await self.mem.get_context()):
-                response = resp
+                response = ""
+                async for resp in self.llm.generate(
+                    await self.mem.get_context(self.video_analyzer.emotion)
+                ):
+                    response = resp
 
-            t1 = self.ws.send_json(
-                {"type": MESSAGE_TYPE_AVATAR_SPEAK, "data": {"text": response}}
-            )
-            t2 = self.mem.add(actor="assistant", message=response)
-            await asyncio.gather(t1, t2)
-            
+                t1 = self.ws.send_json(
+                    {"type": MESSAGE_TYPE_AVATAR_SPEAK, "data": {"text": response}}
+                )
+                t2 = self.mem.add(actor="assistant", message=response)
+                await asyncio.gather(t1, t2)
+            except Exception as e:
+                continue

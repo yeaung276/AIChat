@@ -1,12 +1,12 @@
 from typing import AsyncGenerator
-from vllm import AsyncLLMEngine, AsyncEngineArgs, SamplingParams
 
 class TinyLLama:
-    engine: AsyncLLMEngine | None = None
-    params: SamplingParams | None = None
+    engine = None
+    params = None
 
     @classmethod
     def configure(cls, model="unsloth/tinyllama-chat-bnb-4bit", temperature=0.7, max_token=512, device = 'cpu'):
+      from vllm import AsyncLLMEngine, AsyncEngineArgs, SamplingParams
       engine_args = AsyncEngineArgs(
           model=model,
           max_model_len=max_token,

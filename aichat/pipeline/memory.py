@@ -6,6 +6,7 @@ from sqlmodel import update
 from aichat.db_models.chat import Chat
 from aichat.db_models.db import Session
 from aichat.types import MESSAGE_TYPE_TRANSCRIPT
+from aichat.utils.prompt import build_prompt
 
 
 class Memory:
@@ -27,9 +28,11 @@ class Memory:
         )
         self.db.exec(
             update(Chat)
-            .where(Chat.id == self.chat_id) # type: ignore
+            .where(Chat.id == self.chat_id) # type: ignore[arg-type]
             .values(transcripts=self.messages)
         )
 
-    async def get_context(self):
-        return self.messages[-1]["message"]
+    async def get_context(self, emotion: str):
+        return build_prompt(
+            situation=self.prompt, emotion=emotion, user=self.messages[-1]["message"]
+        )
