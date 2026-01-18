@@ -18,6 +18,7 @@ dependencies = [
     "tf-keras>=2.20.1",
     "uvicorn[standard]>=0.38.0",
     "transformers>=4.57.3",
+    "pyngrok>=7.5.0",
 ]
 
 [dependency-groups]

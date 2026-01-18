@@ -2,6 +2,9 @@ import os
 import yaml
 import logging
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
+
+from pyngrok import ngrok
 
 from sqlmodel import SQLModel
 from fastapi import FastAPI
@@ -11,13 +14,16 @@ from fastapi.responses import FileResponse
 from aichat.db_models.db import engine
 from aichat.pipeline.factory import ModelFactory
 from aichat.routes import chatRouter, userRouter
-from aichat.security.auth import get_current_user
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # loading env
+    logger.info("loading env file...")
+    load_dotenv()
+    
     # Initialize DB
     SQLModel.metadata.create_all(engine)
     
@@ -28,7 +34,19 @@ async def lifespan(app: FastAPI):
         config = yaml.safe_load(f)
 
     await ModelFactory.configure(config)
+    
+    # Setting up tunneling
+    tunnel = None
+    if os.getenv("NGROK_API_KEY"):
+        logger.info("NGROK_API_KEY found. Setting up ngrok tunneling...")
+        ngrok.set_auth_token(os.getenv("NGROK_API_KEY", ""))
+        tunnel = ngrok.connect(
+            addr=os.getenv("NGROK_APP_PORT"),
+        )
+        logging.info("APP available at %s", tunnel.public_url)
     yield
+    if tunnel:
+        ngrok.disconnect(tunnel.public_url) # type: ignore
 
 app = FastAPI(lifespan=lifespan)
 
