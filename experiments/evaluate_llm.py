@@ -10,7 +10,7 @@ from experiments.eval_utils.llm import (
     generate,
 )
 
-TEST_DATA = "experiments/test.jsonl"
+TEST_DATA = "data/test.jsonl"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 MODELS = [
@@ -42,7 +42,8 @@ def plot_results(df: pd.DataFrame):
     plt.ylabel("Perplexity (↓ better)")
     plt.title("Fluency Comparison")
     plt.tight_layout()
-    plt.show()
+    plt.savefig("perplexity.png", dpi=300, bbox_inches='tight')
+    plt.close()
 
     # ---- BERTScore F1 ----
     plt.figure()
@@ -50,7 +51,8 @@ def plot_results(df: pd.DataFrame):
     plt.ylabel("BERTScore F1 (↑ better)")
     plt.title("Semantic Adequacy Comparison")
     plt.tight_layout()
-    plt.show()
+    plt.savefig("bertscore_f1.png", dpi=300, bbox_inches='tight')
+    plt.close()
 
     # ---- Emotion Macro-F1 ----
     plt.figure()
@@ -58,7 +60,8 @@ def plot_results(df: pd.DataFrame):
     plt.ylabel("Emotion Macro-F1 (↑ better)")
     plt.title("Emotional Alignment Comparison")
     plt.tight_layout()
-    plt.show()
+    plt.savefig("emotion_macro_f1.png", dpi=300, bbox_inches='tight')
+    plt.close()
 
     # ---- Trade-off: Perplexity vs Emotion ----
     plt.figure()
@@ -74,7 +77,10 @@ def plot_results(df: pd.DataFrame):
     plt.ylabel("Emotion Macro-F1 (↑ better)")
     plt.title("Fluency vs Emotional Alignment Trade-off")
     plt.tight_layout()
-    plt.show()
+    plt.savefig("tradeoff.png", dpi=300, bbox_inches='tight')
+    plt.close()
+    
+    print("Plots saved: perplexity.png, bertscore_f1.png, emotion_macro_f1.png, tradeoff.png")
     
 def evaluate():
     rows = []
@@ -126,3 +132,5 @@ def evaluate():
 
 
 
+if __name__ == "__main__":
+    evaluate()

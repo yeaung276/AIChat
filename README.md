@@ -1,5 +1,5 @@
 # Dev command
-uv run uvicorn main:app --reload --port 8080
+uv run uvicorn aichat.app:app --reload --port 8080
 
 # Test command
 uv run pytest --cov=aichat --cov-report=html tests/

@@ -71,10 +71,24 @@ class Communicator {
       const offer = await this.rtc.createOffer();
       await this.rtc.setLocalDescription(offer);
 
+      await new Promise((resolve) => {
+        if (this.rtc.iceGatheringState === 'complete') {
+          resolve();
+        } else {
+          const waitForICEComplete = () => {
+            if (this.rtc.iceGatheringState === 'complete') {
+              this.rtc.onicegatheringstatechange = null;
+              resolve();
+            }
+          };
+          this.rtc.onicegatheringstatechange = waitForICEComplete;
+        }
+      });
+
       this.ws.send(
         JSON.stringify({
           type: MESSAGE_TYPE_SDP_OFFER,
-          sdp: offer.sdp,
+          sdp: this.rtc.localDescription.sdp,
           chat_id: chatId,
         })
       );
