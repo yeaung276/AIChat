@@ -1,49 +1,61 @@
-import json
+import torch
+from tqdm import tqdm
 
-from aichat.utils.prompt import build_prompt
 
-def generate(model, tokenizer, jsonl_path: str,  max_new_tokens=128):
-    prompt, refs, emotions = [], [], []
-
-    with open(jsonl_path, "r") as f:
-        for line in f:
-            sample = json.loads(line)
-
-            dialogue = sample["empathetic_dialogues"]
-
-            prompt.append(
-                build_prompt(
-                    situation=sample["Situation"],
-                    emotion=sample["emotion"],
-                    user=dialogue,
-                )
+def generate(model, tokenizer, dataloader, max_new_tokens=128):
+    """
+    Generate predictions in batches for memory efficiency
+    
+    Args:
+        model: The language model
+        tokenizer: The tokenizer
+        jsonl_path: Path to input data
+        max_new_tokens: Maximum tokens to generate
+        batch_size: Number of samples per batch (adjust based on GPU memory)
+    """
+    
+    all_preds, all_refs, all_emotions = [], [], []
+    
+    model.eval()
+    
+    with torch.no_grad():
+        for batch in tqdm(dataloader, desc="Generating"):
+            # Tokenize batch
+            enc = tokenizer(
+                batch["prompts"],
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+                max_length=512
+            ).to(model.device)
+            
+            # Generate
+            outputs = model.generate(
+                **enc,
+                max_new_tokens=max_new_tokens,
+                pad_token_id=tokenizer.eos_token_id,
+                do_sample=True,
+                top_k=50,
+                top_p=0.95,
+                temperature=0.7,
             )
-            refs.append(sample["labels"])
-            emotions.append(sample["emotion"])
-
-    enc = tokenizer(
-        prompt,
-        return_tensors="pt",
-        padding=True,
-        truncation=True,
-    ).to(model.device)
-
-    outputs = model.generate(
-        **enc,
-        max_new_tokens=max_new_tokens,
-        pad_token_id=tokenizer.eos_token_id,
-        do_sample=True,
-        top_k=50,
-        top_p=0.95,
-    )
+            
+            # Decode only the new tokens
+            enc_length = enc.input_ids.shape[1]
+            new_tks = outputs[:, enc_length:]
+            
+            preds = tokenizer.batch_decode(
+                new_tks,
+                skip_special_tokens=True,
+            )
+            
+            # Collect results
+            all_preds.extend(preds)
+            all_refs.extend(batch["refs"])
+            all_emotions.extend(batch["emotions"])
+            
+            # Clear cache to free memory
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
     
-    enc_length = enc.input_ids.shape[1]
-    new_tks = outputs[:, enc_length:]
-
-    preds = tokenizer.batch_decode(
-        new_tks,
-        skip_special_tokens=True,
-    )
-    
-    return preds, refs, emotions
- 
+    return all_preds, all_refs, all_emotions

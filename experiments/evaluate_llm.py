@@ -8,6 +8,7 @@ from experiments.eval_utils.llm import (
     evaluate_bertscore,
     evaluate_emotion,
     generate,
+    get_dataloader   
 )
 
 TEST_DATA = "data/test.jsonl"
@@ -90,17 +91,19 @@ def evaluate():
 
         model, tokenizer = load_model(cfg["hf_id"])
         
+        dataloader = get_dataloader(TEST_DATA, max_samples=2000, batch_size=200)
+        
         preds, refs, emotions = generate(
             model,
             tokenizer,
-            TEST_DATA,
+            dataloader
         )
 
         # Perplexity (teacher-forced)
         ppl = evaluate_perplexity(
             model,
             tokenizer,
-            TEST_DATA,
+            dataloader,
         )
 
         # BERTScore 
