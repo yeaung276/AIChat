@@ -7,7 +7,7 @@ Testing Strategy:
 import pytest
 import inspect
 
-from aichat.components.llm.tiny_llama.cpu_model import TinyLLamaCPU
+from aichat.components.llm.transformer.cpu_model import TinyLLamaCPU
 
 
 class TestTinyLlamaConfigureMethod:
