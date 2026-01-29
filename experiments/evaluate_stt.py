@@ -41,8 +41,8 @@ def load_models():
         models.append({"name": m["name"], "model": model_class()})
     return models
 
-def plot_results(results):
-    df = pd.DataFrame(results)
+def plot_results(df: pd.DataFrame):
+    
     
     # ---- WER ----
     plt.figure()
@@ -128,9 +128,9 @@ async def evaluate():
     
     df = pd.DataFrame(results)
     print("\n=== Final Results ===")
-    print(df)
+    print(df[["model", "WER", "RTF"]])
 
-    plot_results(results)
+    plot_results(df)
 
 
 if __name__ == "__main__":
