@@ -19,22 +19,22 @@ class ModelFactory:
     supported_faces = {}
 
     @classmethod
-    async def configure(cls, config: dict):
+    def configure(cls, config: dict):
         """pre-configure models before server is ready to accept connection."""
 
         # STT model initializing and configuration
         logger.info("initializing and loading speech modules...")
-        cls.supported_speech = await cls._import_modules(config.get("speech", []))
+        cls.supported_speech = cls._import_modules(config.get("speech", []))
 
         # Video model initializing and configuration
         logger.info("initializing and loading video modules...")
-        cls.supported_video_analyzer = await cls._import_modules(
+        cls.supported_video_analyzer = cls._import_modules(
             config.get("video", [])
         )
 
         # LLM model initializing and configuration
         logger.info("initializing and loading llm modules...")
-        cls.supported_llm = await cls._import_modules(config.get("llm", []))
+        cls.supported_llm = cls._import_modules(config.get("llm", []))
 
         # Voice and Face initializing
         logger.info("initializing and loading faces and voices...")
@@ -92,7 +92,7 @@ class ModelFactory:
         return cls.supported_voices[name]
 
     @staticmethod
-    async def _import_modules(modules: list[dict]):
+    def _import_modules(modules: list[dict]):
         """Load modules based on configuration"""
 
         supported_modules = {}
@@ -117,7 +117,7 @@ class ModelFactory:
                 logger.warning("configure method is missing. skipping...")
                 continue
             try:
-                await module.configure(**conf["config"] or {})
+                module.configure(**conf["config"] or {})
             except Exception as e:
                 logger.warning("fail to configure module %s. %s", conf["name"], e)
                 continue

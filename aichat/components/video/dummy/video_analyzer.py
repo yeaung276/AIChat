@@ -6,7 +6,7 @@ class DummyVideoAnalyzer:
         return "happy"
     
     @classmethod
-    async def configure(cls, **kwargs):
+    def configure(cls, **kwargs):
         pass
 
     async def accept(self, frame):

@@ -1,1 +1,1 @@
-from .model import TinyLLama
+from .model import Transformer

@@ -9,7 +9,7 @@ from transformers import (
 )
 
 
-class TinyLLamaCPU:
+class TransformerCPU:
     model = None
     tokenizer = None
     generation_kwargs = None

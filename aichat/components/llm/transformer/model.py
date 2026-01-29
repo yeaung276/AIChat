@@ -1,7 +1,7 @@
 from typing import AsyncGenerator
 
 
-class TinyLLama:
+class Transformer:
     engine = None
     params = None
 

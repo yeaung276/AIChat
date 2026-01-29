@@ -33,7 +33,7 @@ async def lifespan(app: FastAPI):
     with open(config_f, "r") as f:
         config = yaml.safe_load(f)
 
-    await ModelFactory.configure(config)
+    ModelFactory.configure(config)
     
     # Setting up tunneling
     tunnel = None

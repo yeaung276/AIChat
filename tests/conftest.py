@@ -45,7 +45,7 @@ def configure_model_factory(request):
     }
 
     # Run async configure in sync context
-    asyncio.run(ModelFactory.configure(config))
+    ModelFactory.configure(config)
 
 
 # ==================== Mock Fixtures ====================
