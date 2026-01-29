@@ -19,6 +19,8 @@ dependencies = [
     "uvicorn[standard]>=0.38.0",
     "transformers>=4.57.3",
     "pyngrok>=7.5.0",
+    "kokoro>=0.9.4",
+    "pip>=25.3",
 ]
 
 [dependency-groups]

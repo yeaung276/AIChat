@@ -3,9 +3,11 @@
         "abuf",
         "aichat",
         "aiortc",
+        "Kokoro",
         "NGROK",
         "Resampler",
         "vbuf",
+        "viseme",
         "Zipformer"
     ],
     "python.testing.pytestArgs": [

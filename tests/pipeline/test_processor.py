@@ -8,7 +8,7 @@ import pytest
 import asyncio
 from unittest.mock import AsyncMock, Mock, patch
 
-from aichat.pipeline.processor import Processor
+from aichat.pipeline.processor import Processor, ProfiledResult
 from aichat.types import MESSAGE_TYPE_AVATAR_SPEAK
 
 
@@ -180,7 +180,7 @@ class TestProcessorAudioPipeline:
             assert processor.stt.accept.call_count == 1
             assert not processor.llm_queue.empty()
             message = await processor.llm_queue.get()
-            assert message == "test transcription"
+            assert message.incoming == "test transcription"
 
     @pytest.mark.asyncio
     async def test_audio_track_ignores_none_from_stt(self, mock_audio_frame, mock_audio_track):
@@ -246,14 +246,21 @@ class TestProcessorLLMPipeline:
         )
         processor.ws = mock_websocket
 
-        await processor.llm_queue.put("test input")
+        await processor.llm_queue.put(ProfiledResult(incoming="test input", profiled=[]))
 
-        task = asyncio.create_task(processor._read_llm_queue(processor.llm_queue))
+        task1 = asyncio.create_task(processor._read_llm_queue(processor.llm_queue))
+        task2 = asyncio.create_task(processor._read_tts_queue(processor.tts_queue))
         await asyncio.sleep(0.1)
-        task.cancel()
+        task1.cancel()
 
         try:
-            await task
+            await task1
+        except asyncio.CancelledError:
+            pass
+        
+        task2.cancel()
+        try:
+            await task2
         except asyncio.CancelledError:
             pass
 
@@ -286,8 +293,8 @@ class TestProcessorLLMPipeline:
         )
         processor.ws = mock_websocket
 
-        await processor.llm_queue.put("first")
-        await processor.llm_queue.put("second")
+        await processor.llm_queue.put(ProfiledResult(incoming="first", profiled=[]))
+        await processor.llm_queue.put(ProfiledResult(incoming="second", profiled=[]))
 
         task = asyncio.create_task(processor._read_llm_queue(processor.llm_queue))
         await asyncio.sleep(0.3)

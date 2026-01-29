@@ -1,5 +1,7 @@
+import time
 import asyncio
-from typing import cast
+from pydantic import BaseModel
+from typing import cast, List, TypedDict, Any
 
 from fastapi import WebSocket
 from av.audio.resampler import AudioResampler
@@ -12,7 +14,18 @@ from aiortc import (
 
 from aichat.pipeline.memory import Memory
 from aichat.pipeline.factory import ModelFactory
-from aichat.types import MESSAGE_TYPE_AVATAR_SPEAK, MESSAGE_TYPE_TRANSCRIPT
+from aichat.types import MESSAGE_TYPE_AVATAR_SPEAK
+
+
+class ProfiledResult(BaseModel):
+    class profile(TypedDict):
+        component: str
+        time: float
+
+    profiled: List[profile] = []
+    incoming: str = ""
+    response: str = ""
+    voice: Any = None
 
 
 class Processor:
@@ -23,6 +36,7 @@ class Processor:
         self.ws: WebSocket
         self.mem = memory
         self.llm_queue = asyncio.Queue()
+        self.tts_queue = asyncio.Queue()
 
         # processors
         self.stt = ModelFactory.get_speech_model(speech)
@@ -33,6 +47,7 @@ class Processor:
         self.video_task: asyncio.Task | None = None
         self.audio_task: asyncio.Task | None = None
         self.llm_task: asyncio.Task | None = None
+        self.tts_task: asyncio.Task | None = None
 
     async def bind(self, rtc_in: RTCPeerConnection, ws_out: WebSocket):
         @rtc_in.on("track")
@@ -47,6 +62,7 @@ class Processor:
                 )
 
         self.llm_task = asyncio.create_task(self._read_llm_queue(self.llm_queue))
+        self.tts_task = asyncio.create_task(self._read_tts_queue(self.tts_queue))
         self.ws = ws_out
 
     async def close(self):
@@ -66,11 +82,16 @@ class Processor:
         while True:
             frame = resampler.resample(await track.recv())[0]  # type: ignore
             pcm = frame.to_ndarray()
-            message = await self.stt.accept(
+            data = await self.stt.accept(
                 pcm.flatten(), sample_rate=self.stt.sample_rate
             )
-            if message is not None:
-                await self.llm_queue.put(message)
+            if data is not None:
+                await self.llm_queue.put(
+                    ProfiledResult(
+                        incoming=data,
+                        profiled=[{"component": "tts", "time": time.perf_counter()}],
+                    )
+                )
 
             await asyncio.sleep(0)
 
@@ -78,11 +99,11 @@ class Processor:
         while True:
             await self.video_analyzer.accept(await track.recv())  # type: ignore
 
-    async def _read_llm_queue(self, queue: asyncio.Queue):
+    async def _read_llm_queue(self, queue: asyncio.Queue[ProfiledResult]):
         while True:
-            message = await queue.get()
+            data = await queue.get()
             try:
-                await self.mem.add(actor="user", message=message)
+                await self.mem.add(actor="user", message=data.incoming)
 
                 response = ""
                 async for resp in self.llm.generate(
@@ -90,10 +111,20 @@ class Processor:
                 ):
                     response = resp
 
-                t1 = self.ws.send_json(
-                    {"type": MESSAGE_TYPE_AVATAR_SPEAK, "data": {"text": response}}
-                )
+                data.response = response
+                data.profiled.append({"component": "llm", "time": time.perf_counter()})
+                t1 = self.tts_queue.put(data)
                 t2 = self.mem.add(actor="assistant", message=response)
                 await asyncio.gather(t1, t2)
             except Exception as e:
                 continue
+
+    async def _read_tts_queue(self, queue: asyncio.Queue[ProfiledResult]):
+        while True:
+            data = await queue.get()
+
+            
+
+            await self.ws.send_json(
+                {"type": MESSAGE_TYPE_AVATAR_SPEAK, "data": {"text": data.response}}
+            )
