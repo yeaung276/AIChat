@@ -12,15 +12,27 @@ from google.colab import userdata
 logging.set_verbosity_info()
 
 # ===== Model Configurations =====
-BASE_MODEL = "unsloth/tinyllama-bnb-4bit"   # Model name for 4-bit precision loading
-MAX_SEQ_LENGTH = 2048                       # Maximum sequence length supported by the model
-DTYPE = None                                # Set to None for auto-detection, Float16 for T4/V100, Bfloat16 for Ampere GPUs
-LOAD_IN_4BIT = True                         # Enable 4-bit loading for memory efficiency
+BASE_MODEL = "unsloth/tinyllama-bnb-4bit"               # Model name for 4-bit precision loading
+# BASE_MODEL = "unsloth/Qwen2.5-0.5B-unsloth-bnb-4bit"    # Model name for 4-bit precision loading
+MAX_SEQ_LENGTH = 2048                                   # Maximum sequence length supported by the model
+DTYPE = None                                            # Set to None for auto-detection, Float16 for T4/V100, Bfloat16 for Ampere GPUs
+LOAD_IN_4BIT = True                                     # Enable 4-bit loading for memory efficiency
 
 # ===== PEFT Configurations =====
-LORA_RANK = 16                              # LoRA rank, affects the number of trainable parameters
-LORA_ALPHA = 16
-LORA_DROPOUT = 0                            # Dropout for regularization, currently set to 0
+LORA_RANK = 16                                          # LoRA rank for tiny-llama, affects the number of trainable parameters
+# LORA_RANK = 8                                             # LoRA rank for Qwen, affects the number of trainable parameters
+LORA_ALPHA = 2 * LORA_RANK
+LORA_DROPOUT = 0.05                                        # Dropout for regularization, currently set to 0
+# TARGET_MODULES = ["q_proj","k_proj","v_proj","o_proj"]  # LoRA modules for Qwen
+TARGET_MODULES = [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj",
+    ]                                                   # LoRA module for tiny-llama
 
 # ===== Dataset Configurations =====
 TRAIN_DATASET = "train.jsonl"
@@ -31,9 +43,10 @@ OUTPUT_DIR = "/content/drive/MyDrive/"
 PER_DEVICE_TRAIN_BATCH_SIZE = 16
 GRADIENT_ACCUMULATION_STEPS = 2
 MAX_SEQ_LENGTH = 2048
-LEARNING_RATE = 3e-4
+# LEARNING_RATE = 3e-4                # LR for qwen
+LEARNING_RATE = 5e-5                # LR for tiny-llama
 NUM_TRAIN_EPOCHS = 1
-MAX_STEPS = -1  # Train for full epochs
+MAX_STEPS = -1                      # Train for full epochs
 LOGGING_STEPS = 50
 EVAL_STRATEGY = "steps"
 EVAL_STEPS = 100
@@ -56,15 +69,7 @@ model, tokenizer = FastLanguageModel.from_pretrained(
 model = FastLanguageModel.get_peft_model(
     model,
     r=LORA_RANK,
-    target_modules=[
-        "q_proj",
-        "k_proj",
-        "v_proj",
-        "o_proj",
-        "gate_proj",
-        "up_proj",
-        "down_proj",
-    ],
+    target_modules=TARGET_MODULES,
     lora_alpha=LORA_ALPHA,
     lora_dropout=LORA_DROPOUT,
     bias="none",
@@ -93,7 +98,7 @@ train_args = TrainingArguments(
     eval_strategy=EVAL_STRATEGY,
     eval_steps=EVAL_STEPS,
     save_steps=SAVE_STEPS,
-    warmup_steps=100,
+    warmup_steps=300,
     num_train_epochs=NUM_TRAIN_EPOCHS,
     learning_rate=LEARNING_RATE,
     fp16=not is_bfloat16_supported(),
