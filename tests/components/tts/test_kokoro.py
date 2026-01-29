@@ -8,13 +8,14 @@ class TestKokoroTTS:
         KokoroTTS.configure()
 
         tts = KokoroTTS()
-        tts.generate("Hello?")
-        
-    def test_kokoro_return_correct_metadata(self):
+        tts.synthesize("Hello?")
+    
+    @pytest.mark.asyncio
+    async def test_kokoro_return_correct_metadata(self):
         KokoroTTS.configure()
         
         tts = KokoroTTS()
-        for audio, meta in tts.generate("Hello?"):
+        async for audio, meta in tts.synthesize("Hello?"):
             assert len(audio) > 0, "Should return audio bytes."
             assert len(meta["words"]) > 0, "Should have word timings."
             assert len(meta["words"]) == len(meta["wtimes"]), "Should have word timings."

@@ -23,6 +23,7 @@ class TestProcessorInitialization:
             speech="dummy",
             video="dummy",
             llm="dummy",
+            tts="dummy",
             voice="test_voice",
             memory=mock_memory
         )
@@ -38,20 +39,21 @@ class TestProcessorInitialization:
         """Should have no running tasks before bind()."""
         mock_memory = Mock()
         processor = Processor(
-            speech="dummy", video="dummy", llm="dummy",
+            speech="dummy", video="dummy", llm="dummy", tts="dummy",
             voice="test_voice", memory=mock_memory
         )
 
         assert processor.video_task is None
         assert processor.audio_task is None
         assert processor.llm_task is None
+        assert processor.tts_task is None
 
     @pytest.mark.asyncio
     async def test_processor_bind_stores_websocket(self, mock_websocket, mock_rtc_peer_connection):
         """Should store WebSocket reference after bind()."""
         mock_memory = Mock()
         processor = Processor(
-            speech="dummy", video="dummy", llm="dummy",
+            speech="dummy", video="dummy", llm="dummy", tts="dummy",
             voice="test_voice", memory=mock_memory
         )
 
@@ -67,7 +69,7 @@ class TestProcessorInitialization:
         """Should register 'track' event handler on RTC connection."""
         mock_memory = Mock()
         processor = Processor(
-            speech="dummy", video="dummy", llm="dummy",
+            speech="dummy", video="dummy", llm="dummy", tts="dummy",
             voice="test_voice", memory=mock_memory
         )
 
@@ -83,7 +85,7 @@ class TestProcessorInitialization:
         """Should create LLM processing task."""
         mock_memory = Mock()
         processor = Processor(
-            speech="dummy", video="dummy", llm="dummy",
+            speech="dummy", video="dummy", llm="dummy", tts="dummy",
             voice="test_voice", memory=mock_memory
         )
 
@@ -95,11 +97,27 @@ class TestProcessorInitialization:
         await processor.close()
 
     @pytest.mark.asyncio
+    async def test_processor_bind_creates_tts_task(self, mock_rtc_peer_connection, mock_websocket):
+        """Should create TTS processing task."""
+        mock_memory = Mock()
+        processor = Processor(
+            speech="dummy", video="dummy", llm="dummy", tts="dummy",
+            voice="test_voice", memory=mock_memory
+        )
+
+        await processor.bind(mock_rtc_peer_connection, mock_websocket)
+
+        assert processor.tts_task is not None
+        assert isinstance(processor.tts_task, asyncio.Task)
+
+        await processor.close()
+
+    @pytest.mark.asyncio
     async def test_processor_creates_audio_task_on_audio_track(self, mock_websocket, mock_rtc_peer_connection):
         """Should create audio processing task when audio track is received."""
         mock_memory = Mock()
         processor = Processor(
-            speech="dummy", video="dummy", llm="dummy",
+            speech="dummy", video="dummy", llm="dummy", tts="dummy",
             voice="test_voice", memory=mock_memory
         )
         processor.stt.accept = AsyncMock(return_value=None)
@@ -128,7 +146,7 @@ class TestProcessorInitialization:
         """Should create video processing task when video track is received."""
         mock_memory = Mock()
         processor = Processor(
-            speech="dummy", video="dummy", llm="dummy",
+            speech="dummy", video="dummy", llm="dummy", tts="dummy",
             voice="test_voice", memory=mock_memory
         )
         processor.video_analyzer.accept = AsyncMock()
@@ -159,7 +177,7 @@ class TestProcessorAudioPipeline:
         """Should process audio frames through STT."""
         mock_memory = Mock()
         processor = Processor(
-            speech="dummy", video="dummy", llm="dummy",
+            speech="dummy", video="dummy", llm="dummy", tts="dummy",
             voice="test_voice", memory=mock_memory
         )
 
@@ -187,7 +205,7 @@ class TestProcessorAudioPipeline:
         """Should not queue None messages from STT."""
         mock_memory = Mock()
         processor = Processor(
-            speech="dummy", video="dummy", llm="dummy",
+            speech="dummy", video="dummy", llm="dummy", tts="dummy",
             voice="test_voice", memory=mock_memory
         )
 
@@ -216,7 +234,7 @@ class TestProcessorVideoPipeline:
         """Should send video frames to analyzer."""
         mock_memory = Mock()
         processor = Processor(
-            speech="dummy", video="dummy", llm="dummy",
+            speech="dummy", video="dummy", llm="dummy", tts="dummy",
             voice="test_voice", memory=mock_memory
         )
         processor.video_analyzer.accept = AsyncMock()
@@ -241,7 +259,7 @@ class TestProcessorLLMPipeline:
         mock_memory.add = AsyncMock()
 
         processor = Processor(
-            speech="dummy", video="dummy", llm="dummy",
+            speech="dummy", video="dummy", llm="dummy", tts="dummy",
             voice="test_voice", memory=mock_memory
         )
         processor.ws = mock_websocket
@@ -270,12 +288,13 @@ class TestProcessorLLMPipeline:
         # Should get context from memory
         mock_memory.get_context.assert_called_once()
 
-        # Should send LLM response via WebSocket
+        # Should send TTS audio via WebSocket
         assert mock_websocket.send_json.call_count >= 1
         speak_call = mock_websocket.send_json.call_args_list[0]
         speak_msg = speak_call[0][0]
         assert speak_msg["type"] == MESSAGE_TYPE_AVATAR_SPEAK
-        assert "text" in speak_msg["data"]
+        assert "audio" in speak_msg["data"]
+        assert "meta" in speak_msg["data"]
 
         # Should add assistant response to memory
         assert mock_memory.add.call_count >= 2
@@ -288,7 +307,7 @@ class TestProcessorLLMPipeline:
         mock_memory.add = AsyncMock()
 
         processor = Processor(
-            speech="dummy", video="dummy", llm="dummy",
+            speech="dummy", video="dummy", llm="dummy", tts="dummy",
             voice="test_voice", memory=mock_memory
         )
         processor.ws = mock_websocket
@@ -314,6 +333,40 @@ class TestProcessorLLMPipeline:
         assert user_messages[1] == "second"
 
 
+class TestProcessorTTSPipeline:
+    """Test TTS queue processing with audio synthesis."""
+
+    @pytest.mark.asyncio
+    async def test_tts_queue_synthesizes_and_sends_audio(self, mock_websocket):
+        """Should synthesize audio from TTS queue and send via WebSocket."""
+        mock_memory = AsyncMock()
+        processor = Processor(
+            speech="dummy", video="dummy", llm="dummy", tts="dummy",
+            voice="test_voice", memory=mock_memory
+        )
+        processor.ws = mock_websocket
+
+        # Put message in TTS queue
+        await processor.tts_queue.put(ProfiledResult(response="Hello world", profiled=[]))
+
+        task = asyncio.create_task(processor._read_tts_queue(processor.tts_queue))
+        await asyncio.sleep(0.1)
+        task.cancel()
+
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+        # Should send synthesized audio via WebSocket
+        assert mock_websocket.send_json.call_count >= 1
+        call = mock_websocket.send_json.call_args_list[0]
+        message = call[0][0]
+        assert message["type"] == MESSAGE_TYPE_AVATAR_SPEAK
+        assert "audio" in message["data"]
+        assert "meta" in message["data"]
+
+
 class TestProcessorCleanup:
     """Test task cleanup."""
 
@@ -322,7 +375,7 @@ class TestProcessorCleanup:
         """Should cancel all running tasks."""
         mock_memory = Mock()
         processor = Processor(
-            speech="dummy", video="dummy", llm="dummy",
+            speech="dummy", video="dummy", llm="dummy", tts="dummy",
             voice="test_voice", memory=mock_memory
         )
         processor.stt.accept = AsyncMock(return_value=None)

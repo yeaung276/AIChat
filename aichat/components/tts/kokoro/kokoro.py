@@ -239,7 +239,7 @@ class KokoroTTS:
         self.speed = speed
         self.viseme_sync = VisemeSync()
 
-    def generate(self, text: str):
+    async def synthesize(self, text: str):
         if self.pipeline is None:
             raise Exception("Engine not configured.")
 

@@ -41,6 +41,7 @@ class ConnectionManager:
             speech="dummy",
             video="dummy",
             llm="dummy",
+            tts="dummy",
             voice=chat.voice,
             memory=mem,
         )
@@ -64,7 +65,6 @@ class ConnectionManager:
                     {
                         "type": MESSAGE_TYPE_AVATAR_INITIALIZE,
                         "data": {
-                            "voice": ModelFactory.get_voice(chat.voice),
                             "avatar": ModelFactory.get_avatar(chat.face),
                         },
                     }

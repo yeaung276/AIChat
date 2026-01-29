@@ -188,7 +188,6 @@ class TestConnectionManager:
                         mock_websocket.send_json.assert_called_with({
                             "type": MESSAGE_TYPE_AVATAR_INITIALIZE,
                             "data": {
-                                "voice": {"name": "test_voice", "path": "/voice.mp3"},
                                 "avatar": {"name": "test_face", "path": "/face.png"}
                             }
                         })

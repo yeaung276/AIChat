@@ -5,6 +5,7 @@ from typing import Tuple
 from aichat.components.stt.base import STT
 from aichat.components.llm.base import LLM
 from aichat.components.video.base import VideoAnalyzer
+from aichat.components.tts.base import TTS
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class ModelFactory:
     supported_speech = {}
     supported_llm = {}
     supported_video_analyzer = {}
-    supported_voices = {}
+    supported_tts = {}
     supported_faces = {}
 
     @classmethod
@@ -35,11 +36,13 @@ class ModelFactory:
         # LLM model initializing and configuration
         logger.info("initializing and loading llm modules...")
         cls.supported_llm = cls._import_modules(config.get("llm", []))
+        
+        # TTS model initialization and configuration
+        logger.info("initializing and loading tts model...")
+        cls.supported_tts = cls._import_modules(config.get("tts", []))
 
         # Voice and Face initializing
         logger.info("initializing and loading faces and voices...")
-        for v in config.get("avatars", {}).get("voices", []):
-            cls.supported_voices[v["name"]] = {"path": v["path"]}
         for f in config.get("avatars", {}).get("faces", []):
             cls.supported_faces[f["name"]] = {
                 "url": f["path"],
@@ -48,32 +51,40 @@ class ModelFactory:
             }
 
     @classmethod
-    def get_dialogue_model(cls, name: str, **args) -> LLM:
+    def get_dialogue_model(cls, name: str, **kwargs) -> LLM:
         llm_model = None
         if name not in cls.supported_llm:
             raise ValueError(
                 f"{name} is not supported. Supported models are {", ".join(cls.supported_llm.keys())}"
             )
 
-        return cls.supported_llm[name](**args)
+        return cls.supported_llm[name](**kwargs)
 
     @classmethod
-    def get_speech_model(cls, name: str, **args) -> STT:
+    def get_speech_model(cls, name: str, **kwargs) -> STT:
         if name not in cls.supported_speech:
             raise ValueError(
                 f"{name} is not supported. Supported models are {", ".join(cls.supported_speech.keys())}"
             )
 
-        return cls.supported_speech[name](**args)
+        return cls.supported_speech[name](**kwargs)
 
     @classmethod
-    def get_video_model(cls, name, **args) -> VideoAnalyzer:
+    def get_video_model(cls, name, **kwargs) -> VideoAnalyzer:
         if name not in cls.supported_video_analyzer:
             raise ValueError(
                 f"{name} is not supported. Supported models are {", ".join(cls.supported_video_analyzer.keys())}"
             )
 
-        return cls.supported_video_analyzer[name](**args)
+        return cls.supported_video_analyzer[name](**kwargs)
+    
+    @classmethod
+    def get_tts_model(cls, name, **kwargs) -> TTS:
+        if name not in cls.supported_tts:
+            raise ValueError(
+                f"{name} is not supported. Supported models are {", ".join(cls.supported_tts.keys())}"
+            )
+        return cls.supported_tts[name](**kwargs)
 
     @classmethod
     def get_avatar(cls, name: str):
@@ -82,14 +93,6 @@ class ModelFactory:
                 f"{name} is not supported. Supported faces are {", ".join(cls.supported_faces.keys())}"
             )
         return cls.supported_faces[name]
-
-    @classmethod
-    def get_voice(cls, name: str):
-        if name not in cls.supported_voices:
-            raise ValueError(
-                f"{name} is not supported. Supported voices are {", ".join(cls.supported_voices.keys())}"
-            )
-        return cls.supported_voices[name]
 
     @staticmethod
     def _import_modules(modules: list[dict]):

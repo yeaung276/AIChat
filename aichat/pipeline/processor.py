@@ -31,7 +31,9 @@ class ProfiledResult(BaseModel):
 class Processor:
     """Processor will collect and segment incoming frames, process each, and sync generated frames for output."""
 
-    def __init__(self, speech: str, video: str, llm: str, voice: str, memory: Memory):
+    def __init__(
+        self, speech: str, video: str, llm: str, tts: str, voice: str, memory: Memory
+    ):
         # I/O
         self.ws: WebSocket
         self.mem = memory
@@ -42,6 +44,7 @@ class Processor:
         self.stt = ModelFactory.get_speech_model(speech)
         self.llm = ModelFactory.get_dialogue_model(llm)
         self.video_analyzer = ModelFactory.get_video_model(video)
+        self.tts = ModelFactory.get_tts_model(tts, voice=voice)
 
         # tasks
         self.video_task: asyncio.Task | None = None
@@ -123,8 +126,10 @@ class Processor:
         while True:
             data = await queue.get()
 
-            
-
-            await self.ws.send_json(
-                {"type": MESSAGE_TYPE_AVATAR_SPEAK, "data": {"text": data.response}}
-            )
+            async for audio, meta in self.tts.synthesize(data.response):
+                await self.ws.send_json(
+                    {
+                        "type": MESSAGE_TYPE_AVATAR_SPEAK,
+                        "data": {"audio": audio, "meta": meta},
+                    }
+                )

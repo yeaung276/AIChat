@@ -38,6 +38,13 @@ def configure_model_factory(request):
                 "config": {}
             }
         ],
+        "tts": [
+            {
+                "name": "dummy",
+                "path": "aichat.components.tts.dummy:DummyTTS",
+                "config": {}
+            }
+        ],
         "avatars": {
             "voices": [{"name": "test_voice", "path": "/test/voice.mp3"}],
             "faces": [{"name": "test_face", "path": "/test/face.png", "gender": "neutral"}]

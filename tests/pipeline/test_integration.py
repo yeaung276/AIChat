@@ -68,6 +68,7 @@ class TestProcessorIntegration:
             speech="dummy",
             video="dummy",
             llm="dummy",
+            tts="dummy",
             voice="test_voice",
             memory=mem
         )
@@ -115,10 +116,52 @@ class TestProcessorIntegration:
             transcript_messages = [c[0][0] for c in calls if c[0][0]["type"] == MESSAGE_TYPE_TRANSCRIPT]
             assert len(transcript_messages) == 2
 
-            # Check avatar speak messages
+            # Check avatar speak messages (TTS output)
             speak_messages = [c[0][0] for c in calls if c[0][0]["type"] == MESSAGE_TYPE_AVATAR_SPEAK]
             assert len(speak_messages) >= 1
-            assert "text" in speak_messages[0]["data"]
+            assert "audio" in speak_messages[0]["data"]
+            assert "meta" in speak_messages[0]["data"]
+
+        # Cleanup
+        await processor.close()
+
+    @pytest.mark.asyncio
+    async def test_llm_to_tts_to_websocket_flow(self, mock_websocket, mock_rtc_peer_connection, test_db, test_chat):
+        """Should process: LLM queue -> LLM -> Memory -> TTS queue -> TTS -> WebSocket audio."""
+        from aichat.pipeline.processor import ProfiledResult
+
+        mem = Memory(chat=test_chat, db=test_db, ws=mock_websocket)
+
+        processor = Processor(
+            speech="dummy",
+            video="dummy",
+            llm="dummy",
+            tts="dummy",
+            voice="test_voice",
+            memory=mem
+        )
+
+        await processor.bind(mock_rtc_peer_connection, mock_websocket)
+
+        # Put a message directly in LLM queue
+        await processor.llm_queue.put(ProfiledResult(incoming="test message", profiled=[]))
+
+        # Wait for LLM and TTS processing
+        await asyncio.sleep(0.3)
+
+        # Verify Memory was updated
+        assert len(mem.messages) == 2  # user + assistant
+        assert mem.messages[0]["actor"] == "user"
+        assert mem.messages[0]["message"] == "test message"
+        assert mem.messages[1]["actor"] == "assistant"
+
+        # Verify WebSocket received TTS audio output
+        calls = mock_websocket.send_json.call_args_list
+        speak_messages = [c[0][0] for c in calls if c[0][0]["type"] == MESSAGE_TYPE_AVATAR_SPEAK]
+
+        assert len(speak_messages) >= 1, "Should have at least one TTS audio message"
+        assert "audio" in speak_messages[0]["data"], "Should have audio data from TTS"
+        assert "meta" in speak_messages[0]["data"], "Should have meta data from TTS"
 
         # Cleanup
         await processor.close()
@@ -133,6 +176,7 @@ class TestProcessorIntegration:
             speech="dummy",
             video="dummy",
             llm="dummy",
+            tts="dummy",
             voice="test_voice",
             memory=real_memory
         )
