@@ -46,3 +46,13 @@ def get_dataloader(jsonl_path, max_samples, batch_size):
         num_workers=0  # Set to 0 to avoid issues with tokenizer
     )
     return dataloader
+
+
+def load_single_text_column(file, column, max_samples=100):
+    texts = []
+    with open(file, "r") as f:
+        for line in f:
+            texts.append(json.loads(line)[column])
+            if len(texts) > max_samples:
+                break
+    return texts
