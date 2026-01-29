@@ -1,0 +1,1 @@
+from .paraformer import ParaformerSTT
