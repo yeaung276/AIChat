@@ -8,7 +8,7 @@ from aichat.db_models.chat import Chat
 from aichat.db_models.db import Session
 from aichat.pipeline.processor import Processor
 from aichat.pipeline.factory import ModelFactory
-from aichat.pipeline.memory import Memory
+from aichat.pipeline.context import Context
 from aichat.types import MESSAGE_TYPE_AVATAR_INITIALIZE
 
 INPUT_ANALYZER_AUDIO = "zipformer"
@@ -35,7 +35,7 @@ class ConnectionManager:
         #     face=chat.face,
         # )
         # Create a memory
-        mem = Memory(chat=chat, db=db, ws=ws)
+        mem = Context(chat=chat, db=db, ws=ws)
         # Create a processor
         proc = Processor(
             speech="dummy",
@@ -43,7 +43,7 @@ class ConnectionManager:
             llm="dummy",
             tts="dummy",
             voice=chat.voice,
-            memory=mem,
+            context=mem,
         )
 
         # Create RTC object with connection lifecycle

@@ -1,6 +1,6 @@
 class DummyLLM:
     @classmethod
-    async def configure(cls, **kwargs):
+    def configure(cls, **kwargs):
         pass
     
     def __init__(self, **kwargs):

@@ -12,7 +12,7 @@ from aiortc import (
     RTCPeerConnection,
 )
 
-from aichat.pipeline.memory import Memory
+from aichat.pipeline.context import Context
 from aichat.pipeline.factory import ModelFactory
 from aichat.types import MESSAGE_TYPE_AVATAR_SPEAK
 
@@ -32,11 +32,11 @@ class Processor:
     """Processor will collect and segment incoming frames, process each, and sync generated frames for output."""
 
     def __init__(
-        self, speech: str, video: str, llm: str, tts: str, voice: str, memory: Memory
+        self, speech: str, video: str, llm: str, tts: str, voice: str, context: Context
     ):
         # I/O
         self.ws: WebSocket
-        self.mem = memory
+        self.context = context
         self.llm_queue = asyncio.Queue()
         self.tts_queue = asyncio.Queue()
 
@@ -92,7 +92,7 @@ class Processor:
                 await self.llm_queue.put(
                     ProfiledResult(
                         incoming=data,
-                        profiled=[{"component": "tts", "time": time.perf_counter()}],
+                        profiled=[{"component": "stt_out", "time": time.perf_counter()}],
                     )
                 )
 
@@ -106,18 +106,18 @@ class Processor:
         while True:
             data = await queue.get()
             try:
-                await self.mem.add(actor="user", message=data.incoming)
+                await self.context.add(actor="user", message=data.incoming)
 
                 response = ""
                 async for resp in self.llm.generate(
-                    await self.mem.get_context(self.video_analyzer.emotion)
+                    await self.context.get_context(self.video_analyzer.emotion)
                 ):
                     response = resp
 
                 data.response = response
-                data.profiled.append({"component": "llm", "time": time.perf_counter()})
+                data.profiled.append({"component": "llm_out", "time": time.perf_counter()})
                 t1 = self.tts_queue.put(data)
-                t2 = self.mem.add(actor="assistant", message=response)
+                t2 = self.context.add(actor="assistant", message=response)
                 await asyncio.gather(t1, t2)
             except Exception as e:
                 continue
@@ -127,9 +127,14 @@ class Processor:
             data = await queue.get()
 
             async for audio, meta in self.tts.synthesize(data.response):
+                data.profiled.append({"component": "tts_out", "time": time.perf_counter()})
                 await self.ws.send_json(
                     {
                         "type": MESSAGE_TYPE_AVATAR_SPEAK,
-                        "data": {"audio": audio, "meta": meta},
+                        "data": {
+                            "audio": audio,
+                            "meta": meta,
+                            "waterfall": data.profiled,
+                        },
                     }
                 )

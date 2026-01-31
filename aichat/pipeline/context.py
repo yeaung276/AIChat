@@ -9,7 +9,7 @@ from aichat.types import MESSAGE_TYPE_TRANSCRIPT
 from aichat.utils.prompt import build_prompt
 
 
-class Memory:
+class Context:
     def __init__(self, chat: Chat, db: Session, ws: WebSocket):
         self.chat_id = chat.id
         self.prompt = chat.prompt

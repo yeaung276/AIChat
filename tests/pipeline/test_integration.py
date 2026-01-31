@@ -11,7 +11,7 @@ from sqlmodel import Session, create_engine, SQLModel
 from sqlalchemy.pool import StaticPool
 
 from aichat.pipeline.processor import Processor
-from aichat.pipeline.memory import Memory
+from aichat.pipeline.context import Context
 from aichat.types import MESSAGE_TYPE_AVATAR_SPEAK, MESSAGE_TYPE_TRANSCRIPT
 from aichat.db_models.chat import Chat
 from aichat.db_models.user import User
@@ -62,7 +62,7 @@ class TestProcessorIntegration:
     async def test_full_audio_to_llm_to_websocket_flow(self, mock_websocket, mock_rtc_peer_connection, mock_audio_frame, mock_audio_track, test_db, test_chat):
         """Should process: audio -> STT -> LLM queue -> LLM -> Memory -> WebSocket."""
 
-        mem = Memory(chat=test_chat, db=test_db, ws=mock_websocket)
+        mem = Context(chat=test_chat, db=test_db, ws=mock_websocket)
 
         processor = Processor(
             speech="dummy",
@@ -70,7 +70,7 @@ class TestProcessorIntegration:
             llm="dummy",
             tts="dummy",
             voice="test_voice",
-            memory=mem
+            context=mem
         )
 
         # Override STT to return a message immediately
@@ -130,7 +130,7 @@ class TestProcessorIntegration:
         """Should process: LLM queue -> LLM -> Memory -> TTS queue -> TTS -> WebSocket audio."""
         from aichat.pipeline.processor import ProfiledResult
 
-        mem = Memory(chat=test_chat, db=test_db, ws=mock_websocket)
+        mem = Context(chat=test_chat, db=test_db, ws=mock_websocket)
 
         processor = Processor(
             speech="dummy",
@@ -138,7 +138,7 @@ class TestProcessorIntegration:
             llm="dummy",
             tts="dummy",
             voice="test_voice",
-            memory=mem
+            context=mem
         )
 
         await processor.bind(mock_rtc_peer_connection, mock_websocket)
@@ -170,7 +170,7 @@ class TestProcessorIntegration:
     async def test_video_and_audio_tracks_work_concurrently(self, mock_websocket, mock_rtc_peer_connection, mock_audio_track, mock_video_track, test_db, test_chat):
         """Should handle video and audio tracks simultaneously."""
         # Use real Memory instead of mock
-        real_memory = Memory(chat=test_chat, db=test_db, ws=mock_websocket)
+        real_memory = Context(chat=test_chat, db=test_db, ws=mock_websocket)
 
         processor = Processor(
             speech="dummy",
@@ -178,7 +178,7 @@ class TestProcessorIntegration:
             llm="dummy",
             tts="dummy",
             voice="test_voice",
-            memory=real_memory
+            context=real_memory
         )
         processor.stt.accept = AsyncMock(return_value=None)
         processor.video_analyzer.accept = AsyncMock()

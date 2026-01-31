@@ -6,7 +6,7 @@ class DummySTT:
     """Generate a dummy string every 20 seconds."""
     
     @classmethod
-    async def configure(cls, **kwargs):
+    def configure(cls, **kwargs):
         pass
 
     def __init__(self, interval_sec: float = 20.0, **kwargs):

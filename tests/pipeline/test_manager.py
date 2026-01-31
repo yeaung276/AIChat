@@ -48,7 +48,7 @@ class TestConnectionManager:
                 mock_processor.bind = AsyncMock()
                 mock_processor_cls.return_value = mock_processor
 
-                with patch("aichat.pipeline.manager.Memory") as mock_memory_cls:
+                with patch("aichat.pipeline.manager.Context") as mock_memory_cls:
                     mock_memory = Mock()
                     mock_memory_cls.return_value = mock_memory
 
@@ -69,7 +69,7 @@ class TestConnectionManager:
                     assert call_kwargs["video"] == "dummy"
                     assert call_kwargs["llm"] == "dummy"
                     assert call_kwargs["voice"] == "test_voice"
-                    assert call_kwargs["memory"] == mock_memory
+                    assert call_kwargs["context"] == mock_memory
 
                     # Assert - Processor bound to RTC and WebSocket
                     mock_processor.bind.assert_called_once_with(
@@ -96,7 +96,7 @@ class TestConnectionManager:
         """Should register connectionstatechange handler to monitor RTC state."""
         with patch("aichat.pipeline.manager.RTCPeerConnection", return_value=mock_rtc_peer_connection):
             with patch("aichat.pipeline.manager.Processor", return_value=AsyncMock()):
-                with patch("aichat.pipeline.manager.Memory"):
+                with patch("aichat.pipeline.manager.Context"):
                     await manager.register(mock_chat, "sdp", mock_websocket, test_db)
 
                     # Assert - Event handler registered
@@ -110,7 +110,7 @@ class TestConnectionManager:
         with patch("aichat.pipeline.manager.RTCPeerConnection", return_value=mock_rtc_peer_connection):
             mock_processor = AsyncMock()
             with patch("aichat.pipeline.manager.Processor", return_value=mock_processor):
-                with patch("aichat.pipeline.manager.Memory"):
+                with patch("aichat.pipeline.manager.Context"):
                     await manager.register(mock_chat, "sdp", mock_websocket, test_db)
 
                     # Simulate state change to failed
@@ -131,7 +131,7 @@ class TestConnectionManager:
         with patch("aichat.pipeline.manager.RTCPeerConnection", return_value=mock_rtc_peer_connection):
             mock_processor = AsyncMock()
             with patch("aichat.pipeline.manager.Processor", return_value=mock_processor):
-                with patch("aichat.pipeline.manager.Memory"):
+                with patch("aichat.pipeline.manager.Context"):
                     await manager.register(mock_chat, "sdp", mock_websocket, test_db)
 
                     # Simulate state change to closed
@@ -152,7 +152,7 @@ class TestConnectionManager:
         with patch("aichat.pipeline.manager.RTCPeerConnection", return_value=mock_rtc_peer_connection):
             mock_processor = AsyncMock()
             with patch("aichat.pipeline.manager.Processor", return_value=mock_processor):
-                with patch("aichat.pipeline.manager.Memory"):
+                with patch("aichat.pipeline.manager.Context"):
                     await manager.register(mock_chat, "sdp", mock_websocket, test_db)
 
                     # Simulate state change to disconnected
@@ -172,7 +172,7 @@ class TestConnectionManager:
         """Should send avatar initialization message when connection established."""
         with patch("aichat.pipeline.manager.RTCPeerConnection", return_value=mock_rtc_peer_connection):
             with patch("aichat.pipeline.manager.Processor", return_value=AsyncMock()):
-                with patch("aichat.pipeline.manager.Memory"):
+                with patch("aichat.pipeline.manager.Context"):
                     with patch("aichat.pipeline.manager.ModelFactory") as mock_factory:
                         mock_factory.get_voice.return_value = {"name": "test_voice", "path": "/voice.mp3"}
                         mock_factory.get_avatar.return_value = {"name": "test_face", "path": "/face.png"}
@@ -200,7 +200,7 @@ class TestConnectionManager:
         with patch("aichat.pipeline.manager.RTCPeerConnection", return_value=mock_rtc_peer_connection):
             mock_processor = AsyncMock()
             with patch("aichat.pipeline.manager.Processor", return_value=mock_processor):
-                with patch("aichat.pipeline.manager.Memory"):
+                with patch("aichat.pipeline.manager.Context"):
                     await manager.register(mock_chat, "sdp", mock_websocket, test_db)
 
                     # Act
@@ -249,7 +249,7 @@ class TestConnectionManager:
 
         with patch("aichat.pipeline.manager.RTCPeerConnection", side_effect=[mock_rtc1, mock_rtc2]):
             with patch("aichat.pipeline.manager.Processor", return_value=AsyncMock()):
-                with patch("aichat.pipeline.manager.Memory"):
+                with patch("aichat.pipeline.manager.Context"):
                     # Register both
                     await manager.register(chat1, "sdp1", mock_websocket, test_db)
                     await manager.register(chat2, "sdp2", mock_websocket, test_db)
@@ -273,7 +273,7 @@ class TestConnectionManager:
         with patch("aichat.pipeline.manager.RTCPeerConnection", return_value=mock_rtc_peer_connection):
             mock_processor = AsyncMock()
             with patch("aichat.pipeline.manager.Processor", return_value=mock_processor):
-                with patch("aichat.pipeline.manager.Memory"):
+                with patch("aichat.pipeline.manager.Context"):
                     await manager.register(mock_chat, "sdp", mock_websocket, test_db)
 
                     # Manually deregister
