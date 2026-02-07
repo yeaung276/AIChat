@@ -5,6 +5,11 @@ from tqdm import tqdm
 def evaluate_latency(model, tokenizer, dataloader, max_new_tokens=128):
     ttfts = []
     e2es = []
+
+    stop_token_ids = []
+    for seq in ["\n###", "</s>"]:
+        tokens = tokenizer.encode(seq, add_special_tokens=False)
+        stop_token_ids.extend(tokens)
     
     model.eval()
     with torch.no_grad():
@@ -33,7 +38,8 @@ def evaluate_latency(model, tokenizer, dataloader, max_new_tokens=128):
                 top_k=50,
                 top_p=0.95,
                 temperature=0.7,
-                stopping_criteria=[first_token_callback]
+                stopping_criteria=[first_token_callback],
+                eos_token_id=stop_token_ids
             )
             
             end = time.perf_counter()

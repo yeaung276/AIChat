@@ -29,6 +29,12 @@ def generate(model, tokenizer, dataloader, max_new_tokens=128):
                 max_length=512
             ).to(model.device)
             
+            # Encode the stop string </s> to get its token IDs
+            stop_token_ids = []
+            for seq in ["\n###", "</s>"]:
+                tokens = tokenizer.encode(seq, add_special_tokens=False)
+                stop_token_ids.extend(tokens)
+            
             # Generate
             outputs = model.generate(
                 **enc,
@@ -38,6 +44,7 @@ def generate(model, tokenizer, dataloader, max_new_tokens=128):
                 top_k=50,
                 top_p=0.95,
                 temperature=0.7,
+                eos_token_id=stop_token_ids,  # Stop when generating </s>
             )
             
             # Decode only the new tokens

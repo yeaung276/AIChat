@@ -18,10 +18,19 @@ OUTPUT_DIR = "reports/"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 MODELS = [
     {
-        "name": "Base TinyLLaMA",
-        "hf_id": "unsloth/tinyllama-chat-bnb-4bit",
+        "name": "Base Qwen2.5",
+        "hf_id": "unsloth/Qwen2.5-0.5B-unsloth-bnb-4bit",
     },
-    {"name": "Fine-tuned", "hf_id": "unsloth/tinyllama-chat-bnb-4bit", "lora": ""},
+    {
+        "name": "Fintuned Qwen2.5",
+        "hf_id": "unsloth/Qwen2.5-0.5B-unsloth-bnb-4bit",
+        "lora": "models/qwen2.5-lora",
+    },
+    {
+        "name": "Finetuned TinyLlama",
+        "hf_id": "unsloth/tinyllama-bnb-4bit",
+        "lora": "models/tiny-llama-lora",
+    },
 ]
 
 
