@@ -1,4 +1,5 @@
 import time
+import base64
 import asyncio
 from pydantic import BaseModel
 from typing import cast, List, TypedDict, Any
@@ -132,7 +133,7 @@ class Processor:
                     {
                         "type": MESSAGE_TYPE_AVATAR_SPEAK,
                         "data": {
-                            "audio": audio,
+                            "audio": base64.b64encode(audio).decode("utf-8"),
                             "meta": meta,
                             "waterfall": data.profiled,
                         },

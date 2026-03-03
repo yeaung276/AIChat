@@ -15,8 +15,7 @@ from aichat.db_models.db import engine
 from aichat.pipeline.factory import ModelFactory
 from aichat.routes import chatRouter, userRouter
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

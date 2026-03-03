@@ -1,20 +1,20 @@
 speech:
-# - name: zipformer
-#   path: "aichat.components.stt.zipformer:ZipformerSTT"
-#   config:
-#     sample_rate: 16000
-#     model_dir: "models/zipformer"
-#     device: "cpu"
+- name: zipformer
+  path: "aichat.components.stt.zipformer:ZipformerSTT"
+  config:
+    sample_rate: 16000
+    model_dir: "models/zipformer"
+    device: "cpu"
 - name: dummy
   path: "aichat.components.stt.dummy:DummySTT"
   config:
 
 emotion:
-# - name: deepface
-#   path: 
-#   config:
-#     sample_rate: 5 # frame per second
-#     decay_rate: 7
+- name: deepface
+  path: "aichat.components.video.deepface:DeepFaceVideoAnalyzer"
+  config:
+    sample_rate: 5 # frame per second
+    decay_rate: 7
 - name: dummy
   path: "aichat.components.video.dummy:DummyVideoAnalyzer"
   config:
@@ -30,6 +30,10 @@ voice:
 - name: dummy
   path: "aichat.components.tts.dummy:DummyTTS"
   config: 
+- name: kokoro
+  path: "aichat.components.tts.kokoro:KokoroTTS"
+  config:
+
 
 
 avatars:

@@ -173,12 +173,9 @@ dialBtn.addEventListener("click", async () => {
             url: data.avatar.url,
             body: data.avatar.gender,
             avatarMood: data.avatar.mode,
-          },
-          {
-            url: data.voice.path,
           }
         ),
-      async (data) => animator.speak(data.text),
+      async (data) => animator.speak(data),
       () => console.log("interrupted"),
       (data) =>
         pushMessage(

@@ -21,6 +21,7 @@ dependencies = [
     "peft>=0.18.1",
     "pip>=26.0.1",
     "sherpa-onnx>=1.12.23",
+    "sherpa-onnx-bin>=1.12.28; sys_platform == 'darwin'",
     "tf-keras>=2.20.1",
     "transformers>=4.57.6",
 ]

@@ -68,6 +68,7 @@ dependencies = [
     { name = "pyngrok" },
     { name = "python-jose" },
     { name = "sherpa-onnx" },
+    { name = "sherpa-onnx-bin", marker = "sys_platform == 'darwin'" },
     { name = "sqlmodel" },
     { name = "tf-keras" },
     { name = "transformers" },
@@ -117,6 +118,7 @@ requires-dist = [
     { name = "pyngrok", specifier = ">=7.5.0" },
     { name = "python-jose", specifier = ">=3.5.0" },
     { name = "sherpa-onnx", specifier = ">=1.12.23" },
+    { name = "sherpa-onnx-bin", marker = "sys_platform == 'darwin'", specifier = ">=1.12.28" },
     { name = "sqlmodel", specifier = ">=0.0.31" },
     { name = "tf-keras", specifier = ">=2.20.1" },
     { name = "transformers", specifier = ">=4.57.6" },
@@ -5754,6 +5756,29 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/d1/31/7fa2545ef322b0a65a6e3a282cad7234c7afc22631bc664123da8c8bc0a5/sherpa_onnx-1.12.28-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:46b2af910406f693dd7b33cc591ae8dab02c35eab100bdd2f61d0c5f8c21c6ab", size = 4248950, upload-time = "2026-02-28T09:11:47.711Z" },
     { url = "https://files.pythonhosted.org/packages/b8/8f/7aaac536b7c81cbded5d9983b0cc9f0f060a01722a02986c2e3d9758bd71/sherpa_onnx-1.12.28-cp314-cp314-win32.whl", hash = "sha256:163a41e8eb9b1db303cc3dc0bb0af5a743e40892ab4a634bd4a3c84b604b36bb", size = 1732720, upload-time = "2026-02-28T09:48:07.064Z" },
     { url = "https://files.pythonhosted.org/packages/60/43/3e5890e5c2f4760a7bb0297757acdd1ed97f4a51d81d95b3fce8c21be9cc/sherpa_onnx-1.12.28-cp314-cp314-win_amd64.whl", hash = "sha256:3337b9cbf40079564aadeb3274b56a2bb8184cb3a4f26b8f33e8a18003afc0e4", size = 2067545, upload-time = "2026-02-28T09:32:28.002Z" },
+]
+
+[[package]]
+name = "sherpa-onnx-bin"
+version = "1.12.28"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sherpa-onnx-core", marker = "sys_platform == 'darwin'" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/91/83/f1a5d6bb553d8983317b3bee47125edc00590471b4f6e852291da72f3b8b/sherpa_onnx_bin-1.12.28-py3-none-macosx_10_15_universal2.whl", hash = "sha256:b14ffd5df41a325dcc89a5e36e4464a74463551a8c16e78c6a17fe7b47f4f78c", size = 29156584, upload-time = "2026-02-28T08:59:46.204Z" },
+    { url = "https://files.pythonhosted.org/packages/6e/16/88b284e6c60f7924d14b21bcbb87b0c98cb700d029ad6b0861d3f409f86f/sherpa_onnx_bin-1.12.28-py3-none-macosx_10_15_x86_64.whl", hash = "sha256:dd4cb918ee18bce3805ac80c9749fd13e5211f759727ceaf4e398fd3f11bd531", size = 15319720, upload-time = "2026-02-28T08:34:25.375Z" },
+    { url = "https://files.pythonhosted.org/packages/62/50/fa21c2343cd494143c2c86c5679c88e55ef16039cb2945cdbd596acea68c/sherpa_onnx_bin-1.12.28-py3-none-macosx_11_0_arm64.whl", hash = "sha256:f7dca918aec08282249211f1e02cb50d2989ceac1316fa22ed54de22331bea38", size = 13823883, upload-time = "2026-02-28T08:43:35.848Z" },
+]
+
+[[package]]
+name = "sherpa-onnx-core"
+version = "1.12.28"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/48/55/bac4cdc3b36caa5854351921c7c8635365ebe350fb72e47883d922e01b84/sherpa_onnx_core-1.12.28-py3-none-macosx_10_15_universal2.whl", hash = "sha256:67eaccec8a9b1fecad719e635128d1994db042509a1a9f929931bff77c3c8489", size = 46085810, upload-time = "2026-02-28T08:59:48.661Z" },
+    { url = "https://files.pythonhosted.org/packages/72/0a/76c86236970a84abc6628985d4820187d7561f7b0dbb1d5c18070735004a/sherpa_onnx_core-1.12.28-py3-none-macosx_10_15_x86_64.whl", hash = "sha256:ce614fc07d64a2a46585c8f959b4b34b0cd70c8ef815fd6c2700ddc021191c3f", size = 24820291, upload-time = "2026-02-28T08:34:27.371Z" },
+    { url = "https://files.pythonhosted.org/packages/87/ec/1a585d0e7135ba3156f46efec74b8eabb13dcefd13de3c13892f2bee57b3/sherpa_onnx_core-1.12.28-py3-none-macosx_11_0_arm64.whl", hash = "sha256:a664dd11ea056e044f99d156991abb82f450fa2430f32832f0d2d21f94c1f257", size = 21281726, upload-time = "2026-02-28T08:43:38.159Z" },
 ]
 
 [[package]]

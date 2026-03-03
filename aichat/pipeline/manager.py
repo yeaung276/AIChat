@@ -13,6 +13,7 @@ from aichat.types import MESSAGE_TYPE_AVATAR_INITIALIZE
 
 INPUT_ANALYZER_AUDIO = "zipformer"
 INPUT_ANALYZER_VIDEO = "deepface"
+OUTPUT_SYNTHESIZER_AUDIO = "kokoro"
 
 logger = logging.getLogger(__name__)
 
@@ -27,21 +28,14 @@ class ConnectionManager:
     async def register(
         self, chat: Chat, sdp: str, ws: WebSocket, db: Session
     ) -> RTCSessionDescription:
-        # proc = Processor(
-        #     speech=INPUT_ANALYZER_AUDIO,
-        #     video=INPUT_ANALYZER_VIDEO,
-        #     llm=chat.llm,
-        #     voice=chat.voice,
-        #     face=chat.face,
-        # )
         # Create a memory
         mem = Context(chat=chat, db=db, ws=ws)
         # Create a processor
         proc = Processor(
-            speech="dummy",
-            video="dummy",
+            speech=INPUT_ANALYZER_AUDIO,
+            video=INPUT_ANALYZER_VIDEO,
             llm="dummy",
-            tts="dummy",
+            tts=OUTPUT_SYNTHESIZER_AUDIO,
             voice=chat.voice,
             context=mem,
         )

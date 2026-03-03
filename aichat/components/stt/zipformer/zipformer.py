@@ -43,8 +43,8 @@ class ZipformerSTT:
             sample_rate=sample_rate,
             feature_dim=80,
             enable_endpoint_detection=True,
-            rule1_min_trailing_silence=0.5,
-            rule2_min_trailing_silence=0.8,
+            rule1_min_trailing_silence=0.7,
+            rule2_min_trailing_silence=1,
             rule3_min_utterance_length=20,
         )
 
