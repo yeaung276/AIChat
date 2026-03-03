@@ -1,22 +1,20 @@
 from typing import Literal
 from fastapi import WebSocket
 
-from sqlmodel import update
+from sqlmodel import Session, update
 
 from aichat.db_models.chat import Chat
-from aichat.db_models.db import Session
+from aichat.db_models.db import engine
 from aichat.types import MESSAGE_TYPE_TRANSCRIPT
 from aichat.utils.prompt import build_prompt
 
 
 class Context:
-    def __init__(self, chat: Chat, db: Session, ws: WebSocket):
+    def __init__(self, chat: Chat, ws: WebSocket):
         self.chat_id = chat.id
         self.prompt = chat.prompt
         self.messages = chat.transcripts
         self.ws = ws
-        self.db = db
-        self.chat = chat
 
     async def add(self, actor: Literal["user", "assistant"], message: str):
         self.messages.append({"actor": actor, "message": message})
@@ -26,11 +24,13 @@ class Context:
                 "data": {"actor": actor, "message": message},
             }
         )
-        self.db.exec(
-            update(Chat)
-            .where(Chat.id == self.chat_id) # type: ignore[arg-type]
-            .values(transcripts=self.messages)
-        )
+        with Session(engine) as session:
+            session.exec(
+                update(Chat)
+                .where(Chat.id == self.chat_id)  # type: ignore[arg-type]
+                .values(transcripts=self.messages)
+            )
+            session.commit()
 
     async def get_context(self, emotion: str):
         return build_prompt(

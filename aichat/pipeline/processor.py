@@ -52,10 +52,33 @@ class Processor:
         self.audio_task: asyncio.Task | None = None
         self.llm_task: asyncio.Task | None = None
         self.tts_task: asyncio.Task | None = None
+        
+        # metrics
+        self.metrics = {
+            "session_start": 0.0,
+            "latency_sum": 0.0,
+            "max_latency": 0.0,
+            "min_latency": float("inf"),
+            "session_turns": 0,
+        }
+
+    def start_session(self):
+        if not self.metrics["session_start"]:
+            self.metrics["session_start"] = time.perf_counter()
+
+    def update_metrics(self, profiled: list):
+        stt_time = next(p["time"] for p in profiled if p["component"] == "stt_out")
+        tts_time = next(p["time"] for p in profiled if p["component"] == "tts_out")
+        latency_ms = (tts_time - stt_time) * 1000
+        self.metrics["latency_sum"] += latency_ms
+        self.metrics["max_latency"] = max(self.metrics["max_latency"], latency_ms)
+        self.metrics["min_latency"] = min(self.metrics["min_latency"], latency_ms)
+        self.metrics["session_turns"] += 1
 
     async def bind(self, rtc_in: RTCPeerConnection, ws_out: WebSocket):
         @rtc_in.on("track")
         async def on_track(track: MediaStreamTrack):
+            self.start_session()
             if track.kind == "video":
                 self.video_task = asyncio.create_task(
                     self._read_video_track(cast(VideoStreamTrack, track))
@@ -78,6 +101,15 @@ class Processor:
 
         if self.llm_task:
             self.llm_task.cancel()
+            
+        turns = self.metrics["session_turns"]
+        return {
+            "mean_latency_ms": self.metrics["latency_sum"] / turns if turns else 0.0,
+            "max_latency_ms": self.metrics["max_latency"],
+            "min_latency_ms": self.metrics["min_latency"],
+            "turns": turns,
+            "session_duration_s": time.perf_counter() - self.metrics["session_start"]
+        }
 
     async def _read_audio_track(self, track: AudioStreamTrack):
         resampler = AudioResampler(
@@ -139,3 +171,4 @@ class Processor:
                         },
                     }
                 )
+            self.update_metrics(data.profiled)

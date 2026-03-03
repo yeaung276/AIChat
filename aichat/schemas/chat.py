@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import BaseModel
 
@@ -11,6 +11,12 @@ class Agent(BaseModel):
 class ChatRequest(BaseModel):
     agent: Agent
     name: str
-    dialogue: str = "tiny_llama"
-    
-    
+
+
+class FeedbackRequest(BaseModel):
+    session_id: int
+    q1: int
+    q2: int
+    q3: int
+    q4: int
+    q5: Optional[str] = ""

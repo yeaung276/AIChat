@@ -7,8 +7,8 @@ from sqlmodel import select
 from fastapi import APIRouter, WebSocket, Depends
 from fastapi.exceptions import HTTPException
 
-from aichat.db_models.chat import Chat
-from aichat.schemas.chat import ChatRequest
+from aichat.db_models.chat import Chat, Feedback
+from aichat.schemas.chat import ChatRequest, FeedbackRequest
 from aichat.security.auth import get_current_user, get_current_user_ws
 from aichat.db_models.db import get_session, Session
 from aichat.pipeline.manager import ConnectionManager
@@ -47,7 +47,7 @@ async def sdp_exchange(
 
                 logging.info("accepting sdp offer and initializing chat ...")
 
-                answer = await conn_mg.register(chat, data["sdp"], ws=ws, db=db)
+                answer = await conn_mg.register(chat, data["sdp"], ws=ws)
                 await ws.send_json(
                     {
                         "type": MESSAGE_TYPE_SDP_ANSWER,
@@ -101,3 +101,17 @@ async def get_transcript(
     if chat is None:
         raise HTTPException(status_code=404, detail="Chat not found.")
     return chat
+
+@router.post("/feedback")
+async def submit_feedback(req: FeedbackRequest, db: Session = Depends(get_session)):
+    feedback = db.get(Feedback, req.session_id)
+    if feedback is None:
+        raise HTTPException(status_code=404, detail="Feedback session not found.")
+
+    feedback.q1_rating = req.q1
+    feedback.q2_rating = req.q2
+    feedback.q3_rating = req.q3
+    feedback.q4_rating = req.q4
+    feedback.q5_answer = req.q5
+
+    db.commit()
