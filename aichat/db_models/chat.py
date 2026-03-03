@@ -9,7 +9,6 @@ class Chat(SQLModel, table=True):
     voice: str
     face: str
     prompt: str
-    llm: str
     
     transcripts: list[dict] = Field(
         sa_column=Column(JSON),

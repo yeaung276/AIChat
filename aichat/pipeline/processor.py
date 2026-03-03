@@ -43,8 +43,8 @@ class Processor:
         # processors
         self.stt = ModelFactory.get_speech_model(speech)
         self.llm = ModelFactory.get_dialogue_model(llm)
-        self.video_analyzer = ModelFactory.get_video_model(video)
-        self.tts = ModelFactory.get_tts_model(tts, voice=voice)
+        self.video_analyzer = ModelFactory.get_emotion_model(video)
+        self.tts = ModelFactory.get_voice_model(tts, voice=voice)
 
         # tasks
         self.video_task: asyncio.Task | None = None

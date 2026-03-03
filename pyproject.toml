@@ -23,7 +23,6 @@ dependencies = [
     "sherpa-onnx>=1.12.23",
     "tf-keras>=2.20.1",
     "transformers>=4.57.6",
-    "vllm>=0.15.1",
 ]
 
 [dependency-groups]
@@ -39,4 +38,7 @@ dev = [
     "trl>=0.24.0",
     "unsloth>=2026.1.2",
 ]
-
+prod = [
+    {include-group = "dev"},
+    "vllm>=0.15.1",
+]

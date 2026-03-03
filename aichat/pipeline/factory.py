@@ -15,7 +15,7 @@ class ModelFactory:
 
     supported_speech = {}
     supported_llm = {}
-    supported_video_analyzer = {}
+    supported_emotion_analyzer = {}
     supported_tts = {}
     supported_faces = {}
 
@@ -29,8 +29,8 @@ class ModelFactory:
 
         # Video model initializing and configuration
         logger.info("initializing and loading video modules...")
-        cls.supported_video_analyzer = cls._import_modules(
-            config.get("video", [])
+        cls.supported_emotion_analyzer = cls._import_modules(
+            config.get("emotion", [])
         )
 
         # LLM model initializing and configuration
@@ -38,8 +38,8 @@ class ModelFactory:
         cls.supported_llm = cls._import_modules(config.get("llm", []))
         
         # TTS model initialization and configuration
-        logger.info("initializing and loading tts model...")
-        cls.supported_tts = cls._import_modules(config.get("tts", []))
+        logger.info("initializing and loading voice model...")
+        cls.supported_tts = cls._import_modules(config.get("voice", []))
 
         # Voice and Face initializing
         logger.info("initializing and loading faces and voices...")
@@ -55,7 +55,7 @@ class ModelFactory:
         llm_model = None
         if name not in cls.supported_llm:
             raise ValueError(
-                f"{name} is not supported. Supported models are {", ".join(cls.supported_llm.keys())}"
+                f"{name} is not supported llm. Supported models are {", ".join(cls.supported_llm.keys())}"
             )
 
         return cls.supported_llm[name](**kwargs)
@@ -64,25 +64,25 @@ class ModelFactory:
     def get_speech_model(cls, name: str, **kwargs) -> STT:
         if name not in cls.supported_speech:
             raise ValueError(
-                f"{name} is not supported. Supported models are {", ".join(cls.supported_speech.keys())}"
+                f"{name} is not supported speech model. Supported models are {", ".join(cls.supported_speech.keys())}"
             )
 
         return cls.supported_speech[name](**kwargs)
 
     @classmethod
-    def get_video_model(cls, name, **kwargs) -> VideoAnalyzer:
-        if name not in cls.supported_video_analyzer:
+    def get_emotion_model(cls, name, **kwargs) -> VideoAnalyzer:
+        if name not in cls.supported_emotion_analyzer:
             raise ValueError(
-                f"{name} is not supported. Supported models are {", ".join(cls.supported_video_analyzer.keys())}"
+                f"{name} is not supported video model. Supported models are {", ".join(cls.supported_emotion_analyzer.keys())}"
             )
 
-        return cls.supported_video_analyzer[name](**kwargs)
+        return cls.supported_emotion_analyzer[name](**kwargs)
     
     @classmethod
-    def get_tts_model(cls, name, **kwargs) -> TTS:
+    def get_voice_model(cls, name, **kwargs) -> TTS:
         if name not in cls.supported_tts:
             raise ValueError(
-                f"{name} is not supported. Supported models are {", ".join(cls.supported_tts.keys())}"
+                f"{name} is not supported tts. Supported models are {", ".join(cls.supported_tts.keys())}"
             )
         return cls.supported_tts[name](**kwargs)
 
@@ -90,7 +90,7 @@ class ModelFactory:
     def get_avatar(cls, name: str):
         if name not in cls.supported_faces:
             raise ValueError(
-                f"{name} is not supported. Supported faces are {", ".join(cls.supported_faces.keys())}"
+                f"{name} is not supported avatar. Supported faces are {", ".join(cls.supported_faces.keys())}"
             )
         return cls.supported_faces[name]
 

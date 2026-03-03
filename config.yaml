@@ -9,14 +9,7 @@ speech:
   path: "aichat.components.stt.dummy:DummySTT"
   config:
 
-llm:
-# - name: tiny_llama
-#   config:
-- name: dummy
-  path: "aichat.components.llm.dummy:DummyLLM"
-  config:
-
-video:
+emotion:
 # - name: deepface
 #   path: 
 #   config:
@@ -25,6 +18,19 @@ video:
 - name: dummy
   path: "aichat.components.video.dummy:DummyVideoAnalyzer"
   config:
+
+llm:
+# - name: tiny_llama
+#   config:
+- name: dummy
+  path: "aichat.components.llm.dummy:DummyLLM"
+  config:
+
+voice:
+- name: dummy
+  path: "aichat.components.tts.dummy:DummyTTS"
+  config: 
+
 
 avatars:
   faces:

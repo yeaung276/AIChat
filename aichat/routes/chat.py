@@ -74,7 +74,6 @@ async def create_chat(
         voice=req.agent.voice,
         face=req.agent.face,
         prompt=req.agent.prompt,
-        llm=req.dialogue,
         user_id=user.id,
     )
 

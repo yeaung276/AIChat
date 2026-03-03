@@ -19,3 +19,5 @@ link: `https://www.kaggle.com/datasets/atharvjairath/empathetic-dialogues-facebo
 
 ### Run evaluation
 uv run python -m experiments.evaluate_llm
+
+uv add vllm --extra-index-url https://wheels.vllm.ai/nightly --index-strategy unsafe-best-match --prerelease=allow

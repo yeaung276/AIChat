@@ -230,7 +230,6 @@ characterForm.addEventListener("submit", async (e) => {
   const voice = document.getElementById("char-voice").value;
   const face = document.getElementById("char-face").value;
   const prompt = document.getElementById("char-prompt").value.trim();
-  const llm = document.getElementById("char-llm").value;
 
   if (!name || !prompt) {
     alert("Please fill in all required fields");
@@ -246,7 +245,6 @@ characterForm.addEventListener("submit", async (e) => {
       body: JSON.stringify({
         name,
         agent: { voice, face, prompt },
-        dialogue: llm,
       }),
     });
 
