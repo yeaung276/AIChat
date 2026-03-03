@@ -13,21 +13,18 @@
         }
     }
   </script>
-    <script src="/static/assets/modules/animator.js" type="module"></script>
-    <script src="/static/assets/modules/communicator.js" type="module"></script>
+    <script src="/static/js/animator.js" type="module"></script>
+    <script src="/static/js/communicator.js" type="module"></script>
     <script src="/static/js/index.js" type="module"></script>
 </head>
 
 
 <body>
-    <!-- loading -->
     <div id="aura-loading">
         <div class="aura-ring"></div>
     </div>
 
-    <!-- Main Layout: 3 panels -->
     <div id="app-layout">
-        <!-- Left Sidebar: Chat List -->
         <div id="chat-sidebar">
             <div class="sidebar-header">
                 <h2>Chats</h2>
@@ -40,7 +37,6 @@
             </div>
         </div>
 
-        <!-- Center: Avatar & Controls -->
         <div id="center-panel">
             <div id="avatar"></div>
             <div id="controls">
@@ -49,7 +45,6 @@
             </div>
         </div>
 
-        <!-- Right: Transcript Panel -->
         <button id="transcript-toggle">Transcript</button>
         <div id="transcript-panel">
             <div class="transcript-header">
@@ -59,7 +54,6 @@
         </div>
     </div>
 
-    <!-- Character Creation Modal -->
     <div id="character-modal" class="modal" hidden>
         <div class="modal-content">
             <div class="modal-header">

@@ -66,3 +66,7 @@ async def login_page():
 async def register_page():
     return FileResponse("frontend/register.html")
 
+@app.get("/feedback")
+async def feedback_page():
+    return FileResponse("frontend/feedback.html")
+

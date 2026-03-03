@@ -4,6 +4,7 @@ const MESSAGE_TYPE_AVATAR_INITIALIZE = "AVATAR_INITIALIZE";
 const MESSAGE_TYPE_AVATAR_SPEAK = "AVATAR_SPEAK";
 const MESSAGE_TYPE_AVATAR_INTERRUPT = "AVATAR_INTERRUPT";
 const MESSAGE_TYPE_TRANSCRIPT = "SPEECH_TRANSCRIPT"
+const MESSAGE_TYPE_FEEDBACK_ID = "SESSION_FEEDBACK"
 
 const ICE_CONFIG = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -142,6 +143,10 @@ class Communicator {
 
     if (message.type == MESSAGE_TYPE_TRANSCRIPT) {
       this.onTranscript && this.onTranscript(message.data);
+    }
+
+    if (message.type === MESSAGE_TYPE_FEEDBACK_ID) {
+      window.location.href = `/feedback?session_id=${message.data.id}`;
     }
   }
 }
