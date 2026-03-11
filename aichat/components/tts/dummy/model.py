@@ -6,7 +6,7 @@ class DummyTTS:
         ...
     
     async def synthesize(self, text: str):
-        yield "x0F0F0F", {
+        yield b"\x0f\x0f\x0f", {
             "words": [],
             "wtimes": [],
             "wdurations": [],

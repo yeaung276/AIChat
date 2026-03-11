@@ -24,7 +24,7 @@ def configure_model_factory(request):
                 "config": {}
             }
         ],
-        "video": [
+        "emotion": [
             {
                 "name": "dummy",
                 "path": "aichat.components.video.dummy:DummyVideoAnalyzer",
@@ -38,7 +38,7 @@ def configure_model_factory(request):
                 "config": {}
             }
         ],
-        "tts": [
+        "voice": [
             {
                 "name": "dummy",
                 "path": "aichat.components.tts.dummy:DummyTTS",

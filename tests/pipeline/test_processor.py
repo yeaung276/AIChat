@@ -264,7 +264,7 @@ class TestProcessorLLMPipeline:
         )
         processor.ws = mock_websocket
 
-        await processor.llm_queue.put(ProfiledResult(incoming="test input", profiled=[]))
+        await processor.llm_queue.put(ProfiledResult(incoming="test input", profiled=[{"component": "stt_out", "time": 1.0}]))
 
         task1 = asyncio.create_task(processor._read_llm_queue(processor.llm_queue))
         task2 = asyncio.create_task(processor._read_tts_queue(processor.tts_queue))
@@ -347,7 +347,7 @@ class TestProcessorTTSPipeline:
         processor.ws = mock_websocket
 
         # Put message in TTS queue
-        await processor.tts_queue.put(ProfiledResult(response="Hello world", profiled=[]))
+        await processor.tts_queue.put(ProfiledResult(response="Hello world", profiled=[{"component": "stt_out", "time": 1.0}]))
 
         task = asyncio.create_task(processor._read_tts_queue(processor.tts_queue))
         await asyncio.sleep(0.1)

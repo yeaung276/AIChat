@@ -62,7 +62,7 @@ class TestProcessorIntegration:
     async def test_full_audio_to_llm_to_websocket_flow(self, mock_websocket, mock_rtc_peer_connection, mock_audio_frame, mock_audio_track, test_db, test_chat):
         """Should process: audio -> STT -> LLM queue -> LLM -> Memory -> WebSocket."""
 
-        mem = Context(chat=test_chat, db=test_db, ws=mock_websocket)
+        mem = Context(chat=test_chat, ws=mock_websocket)
 
         processor = Processor(
             speech="dummy",
@@ -104,10 +104,6 @@ class TestProcessorIntegration:
             assert mem.messages[0]["message"] == "user said hello"
             assert mem.messages[1]["actor"] == "assistant"
 
-            # Verify database persistence
-            test_db.refresh(test_chat)
-            assert len(test_chat.transcripts) == 2
-
             # Verify WebSocket sent messages (transcripts + avatar speak)
             assert mock_websocket.send_json.call_count >= 2
             calls = mock_websocket.send_json.call_args_list
@@ -130,7 +126,7 @@ class TestProcessorIntegration:
         """Should process: LLM queue -> LLM -> Memory -> TTS queue -> TTS -> WebSocket audio."""
         from aichat.pipeline.processor import ProfiledResult
 
-        mem = Context(chat=test_chat, db=test_db, ws=mock_websocket)
+        mem = Context(chat=test_chat, ws=mock_websocket)
 
         processor = Processor(
             speech="dummy",
@@ -170,7 +166,7 @@ class TestProcessorIntegration:
     async def test_video_and_audio_tracks_work_concurrently(self, mock_websocket, mock_rtc_peer_connection, mock_audio_track, mock_video_track, test_db, test_chat):
         """Should handle video and audio tracks simultaneously."""
         # Use real Memory instead of mock
-        real_memory = Context(chat=test_chat, db=test_db, ws=mock_websocket)
+        real_memory = Context(chat=test_chat, ws=mock_websocket)
 
         processor = Processor(
             speech="dummy",
