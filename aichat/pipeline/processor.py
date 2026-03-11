@@ -124,7 +124,7 @@ class Processor:
             if data is not None:
                 await self.llm_queue.put(
                     ProfiledResult(
-                        incoming=data,
+                        incoming=data.lower(),
                         profiled=[{"component": "stt_out", "time": time.perf_counter()}],
                     )
                 )
