@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
         tunnel = ngrok.connect(
             addr=os.getenv("NGROK_APP_PORT"),
         )
-        logging.info("APP available at %s", tunnel.public_url)
+        logger.info("APP available at %s", tunnel.public_url)
     yield
     if tunnel:
         ngrok.disconnect(tunnel.public_url) # type: ignore

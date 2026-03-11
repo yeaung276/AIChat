@@ -54,10 +54,10 @@ This sets up:
 ## Running the App
 
 ```bash
-uv run uvicorn aichat.app:app --port 8080
+uv run uvicorn aichat.app:app --port 8000
 ```
 
-Then open `http://localhost:8080` in your browser.
+Then open `http://localhost:8000` in your browser.
 
 **First time:**
 1. Go to `/register` and create an account

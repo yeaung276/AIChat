@@ -15,6 +15,7 @@ from aichat.types import MESSAGE_TYPE_AVATAR_INITIALIZE, MESSAGE_TYPE_FEEDBACK_I
 
 INPUT_ANALYZER_AUDIO = "zipformer"
 INPUT_ANALYZER_VIDEO = "deepface"
+DIALOGUE_PROCESSOR = "qwen2.5"
 OUTPUT_SYNTHESIZER_AUDIO = "kokoro"
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,7 @@ class ConnectionManager:
         proc = Processor(
             speech=INPUT_ANALYZER_AUDIO,
             video=INPUT_ANALYZER_VIDEO,
-            llm="dummy",
+            llm=DIALOGUE_PROCESSOR,
             tts=OUTPUT_SYNTHESIZER_AUDIO,
             voice=chat.voice,
             context=mem,
