@@ -24,11 +24,12 @@ async def lifespan(app: FastAPI):
     load_dotenv()
     
     # Initialize DB
+    logger.info("setting up database...")
     SQLModel.metadata.create_all(engine)
     
     # Initialize Models
     config_f = os.getenv("CONFIG_FILE", "config.yaml")
-    logger.info("Using configuration from %s. Use CONFIG_FILE to change this.", config_f)
+    logger.info("Loading models using configuration from %s. Use CONFIG_FILE to change this.", config_f)
     with open(config_f, "r") as f:
         config = yaml.safe_load(f)
 

@@ -13,7 +13,7 @@ class Transformer:
         model="unsloth/Qwen2.5-0.5B-bnb-4bit",
         temperature=0.7,
         max_token=512,
-        gpu_utilization=0.5,
+        gpu_utilization=0.3,
         lora_path: str | None = None,
         lora_name: str | None = None,
         lora_rank: int | None = None,

@@ -54,7 +54,7 @@ This sets up:
 ## Running the App
 
 ```bash
-uv run uvicorn aichat.app:app --reload --port 8080
+uv run uvicorn aichat.app:app --port 8080
 ```
 
 Then open `http://localhost:8080` in your browser.

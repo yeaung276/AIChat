@@ -3,6 +3,8 @@ import shutil
 import zipfile
 import tarfile
 import urllib.request
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -37,7 +39,6 @@ def download_and_extract_tar(url: str, dest_dir: str):
     print(f"Extracting into {dest_path}")
     with tarfile.open(dest_file, "r:bz2") as tf:
         members = tf.getmembers()
-        # Strip the top-level directory from all paths
         top = members[0].name.rstrip("/")
         for member in members:
             member.path = Path(member.path).relative_to(top).as_posix()
@@ -53,20 +54,53 @@ def progress_hook(count, block_size, total_size):
         print(f"\r  {pct}%", end="", flush=True)
 
 
+def download_spacy_model():
+    import spacy
+    try:
+        spacy.load("en_core_web_sm")
+        print("spaCy model already installed, skipping.\n")
+    except OSError:
+        print("Downloading spaCy en_core_web_sm...")
+        venv_python = Path(sys.executable).resolve()
+        subprocess.run([str(venv_python), "-m", "spacy", "download", "en_core_web_sm"], check=True)
+        print("Done.\n")
+
+
+def download_hf_model():
+    from transformers import AutoTokenizer, AutoModelForCausalLM
+    model_id = "unsloth/Qwen3-0.6B-unsloth-bnb-4bit"
+
+    print(f"Downloading tokenizer for {model_id}...")
+    AutoTokenizer.from_pretrained(model_id)
+    print("Done.\n")
+
+    print(f"Downloading model weights for {model_id}...")
+    AutoModelForCausalLM.from_pretrained(model_id)
+    print("Done.\n")
+
+
 if __name__ == "__main__":
     # Qwen2.5 LoRA
-    print("=== [1/3] qwen2.5-lora ===")
+    print("=== [1/5] qwen2.5-lora ===")
     copy_and_unzip("assets/qwen2.5-lora.zip", "models")
 
     # Tiny LLaMA LoRA
-    print("=== [2/3] tiny-llama-lora ===")
+    print("=== [2/5] tiny-llama-lora ===")
     copy_and_unzip("assets/tiny-llama-lora.zip", "models")
 
     # Zipformer
-    print("=== [3/3] zipformer ===")
+    print("=== [3/5] zipformer ===")
     download_and_extract_tar(
         url="https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20.tar.bz2",
         dest_dir="models/zipformer",
     )
+
+    # spaCy
+    print("=== [4/5] spaCy en_core_web_sm ===")
+    download_spacy_model()
+
+    # HuggingFace model
+    print("=== [5/5] Qwen3-0.6B ===")
+    download_hf_model()
 
     print("=== All models ready ===")
