@@ -35,7 +35,10 @@ class Transformer:
         
         cls.params = SamplingParams(
             temperature=temperature, 
-            max_tokens=max_token
+            max_tokens=max_token,
+            stop=["</s>"],
+            stop_token_ids=[],
+            include_stop_str_in_output=False,
         )
 
         if lora_path:

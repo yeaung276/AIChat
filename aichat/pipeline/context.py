@@ -19,6 +19,7 @@ model = AutoModelForCausalLM.from_pretrained(
     "unsloth/Qwen3-0.6B-unsloth-bnb-4bit",
     dtype=torch.float16,
     device_map="auto",
+    load_in_4bit=True
 )
 model = torch.compile(model)
 
