@@ -17,34 +17,26 @@ def configure_model_factory(request):
     from aichat.pipeline.factory import ModelFactory
 
     config = {
-        "speech": [
-            {
-                "name": "dummy",
-                "path": "aichat.components.stt.dummy:DummySTT",
-                "config": {}
-            }
-        ],
-        "emotion": [
-            {
-                "name": "dummy",
-                "path": "aichat.components.video.dummy:DummyVideoAnalyzer",
-                "config": {}
-            }
-        ],
-        "llm": [
-            {
-                "name": "dummy",
-                "path": "aichat.components.llm.dummy:DummyLLM",
-                "config": {}
-            }
-        ],
-        "voice": [
-            {
-                "name": "dummy",
-                "path": "aichat.components.tts.dummy:DummyTTS",
-                "config": {}
-            }
-        ],
+        "speech": {
+            "name": "dummy",
+            "path": "aichat.components.stt.dummy:DummySTT",
+            "config": {}
+        },
+        "emotion": {
+            "name": "dummy",
+            "path": "aichat.components.video.dummy:DummyVideoAnalyzer",
+            "config": {}
+        },
+        "llm": {
+            "name": "dummy",
+            "path": "aichat.components.llm.dummy:DummyLLM",
+            "config": {}
+        },
+        "voice": {
+            "name": "dummy",
+            "path": "aichat.components.tts.dummy:DummyTTS",
+            "config": {}
+        },
         "avatars": {
             "voices": [{"name": "test_voice", "path": "/test/voice.mp3"}],
             "faces": [{"name": "test_face", "path": "/test/face.png", "gender": "neutral"}]
@@ -176,7 +168,7 @@ def test_engine():
     from sqlmodel import SQLModel, create_engine
     from sqlalchemy.pool import StaticPool
     from aichat.db_models.user import User
-    from aichat.db_models.chat import Chat
+    from aichat.db_models.chat import Character
 
     engine = create_engine(
         "sqlite:///:memory:",

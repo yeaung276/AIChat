@@ -1,22 +1,19 @@
 import logging
-from typing import Dict, Tuple
+import asyncio
+from typing import Dict, Tuple, cast
 
 from fastapi import WebSocket
 from aiortc import RTCPeerConnection, RTCSessionDescription
 
-from sqlmodel import Session
+from sqlmodel import Session, update
 
-from aichat.db_models.chat import Chat, Feedback
+from aichat.db_models.chat import Character, ChatSession
 from aichat.db_models.db import engine
 from aichat.pipeline.processor import Processor
 from aichat.pipeline.factory import ModelFactory
 from aichat.pipeline.context import Context
 from aichat.types import MESSAGE_TYPE_AVATAR_INITIALIZE, MESSAGE_TYPE_FEEDBACK_ID
 
-INPUT_ANALYZER_AUDIO = "zipformer"
-INPUT_ANALYZER_VIDEO = "deepface"
-DIALOGUE_PROCESSOR = "qwen2.5"
-OUTPUT_SYNTHESIZER_AUDIO = "kokoro"
 
 logger = logging.getLogger(__name__)
 
@@ -26,18 +23,13 @@ class ConnectionManager:
 
     _conns: Dict[int, Tuple[RTCPeerConnection, Processor, WebSocket]] = {}
 
-    async def register(self, chat: Chat, sdp: str, ws: WebSocket) -> RTCSessionDescription:
+    async def register(
+        self, char: Character, sdp: str, ws: WebSocket
+    ) -> RTCSessionDescription:
         # Create a memory
-        mem = Context(chat=chat, ws=ws)
+        mem = Context(prompt=char.prompt, ws=ws)
         # Create a processor
-        proc = Processor(
-            speech=INPUT_ANALYZER_AUDIO,
-            video=INPUT_ANALYZER_VIDEO,
-            llm=DIALOGUE_PROCESSOR,
-            tts=OUTPUT_SYNTHESIZER_AUDIO,
-            voice=chat.voice,
-            context=mem,
-        )
+        proc = Processor(voice=char.voice, context=mem)
 
         # Create RTC object with connection lifecycle
         rtc = RTCPeerConnection()
@@ -46,25 +38,25 @@ class ConnectionManager:
         async def on_state_change():
             state = rtc.connectionState
 
-            if state in ("failed", "closed", "disconnected") and chat.id in self._conns:
+            if state in ("failed", "closed", "disconnected") and char.id in self._conns:
                 logger.warning(
                     "closing connection due to invalid state change: %s", state
                 )
-                await self.deregister(chat.id)  # type: ignore
+                await self.deregister(char.id)  # type: ignore
 
-            elif state in ("connected") and chat.id in self._conns:
+            elif state in ("connected") and char.id in self._conns:
                 logger.warning("rtc connected. Initializing avatar...")
                 await ws.send_json(
                     {
                         "type": MESSAGE_TYPE_AVATAR_INITIALIZE,
                         "data": {
-                            "avatar": ModelFactory.get_avatar(chat.face),
+                            "avatar": ModelFactory.get_avatar(char.face),
                         },
                     }
                 )
 
         # Register connection
-        self._conns[chat.id] = rtc, proc, ws
+        self._conns[cast(int, char.id)] = rtc, proc, ws
 
         # Bind processor with its I/O
         await proc.bind(rtc_in=rtc, ws_out=ws)
@@ -83,20 +75,25 @@ class ConnectionManager:
 
         await rtc.close()
 
-        metrics = await proc.close()
+        summary = await proc.close()
 
         del self._conns[id]
 
-        feedback = self._save_metrics(metrics)
-        await ws.send_json({
-            "type": MESSAGE_TYPE_FEEDBACK_ID,
-            "data": {
-                "id": feedback.id,
-            },
-        })
+        feedback = self._save_summary(summary)
 
-    def _save_metrics(self, metrics: dict):
-        feedback = Feedback(
+        await ws.send_json(
+            {
+                "type": MESSAGE_TYPE_FEEDBACK_ID,
+                "data": {
+                    "id": feedback.id,
+                },
+            }
+        )
+
+    def _save_summary(self, summary: dict):
+        metrics = summary["metrics"]
+
+        feedback = ChatSession(
             mean_latency_ms=metrics["mean_latency_ms"],
             max_latency_ms=metrics["max_latency_ms"],
             min_latency_ms=metrics["min_latency_ms"] if metrics["turns"] else 0.0,
@@ -112,6 +109,34 @@ class ConnectionManager:
             session.add(feedback)
             session.commit()
             session.refresh(feedback)
-        
+
+        loop = asyncio.get_event_loop()
+        loop.run_in_executor(None, self._save_transcript, summary["transcript"])
+
         return feedback
 
+    def _save_transcript(self, transcripts: list):
+        import spacy
+
+        nlp = spacy.load("en_core_web_sm")
+
+        safe_transcripts = []
+        for msg in transcripts:
+            doc = nlp(msg["message"])
+            result = msg["message"]
+            for ent in reversed(doc.ents):
+                if ent.label_ in {"PERSON", "GPE", "LOC", "ORG"}:
+                    result = (
+                        result[: ent.start_char]
+                        + f"[{ent.label_}]"
+                        + result[ent.end_char :]
+                    )
+                safe_transcripts.append({"actor": msg["actor"], "message": result})
+
+        with Session(engine) as session:
+            session.exec(
+                update(ChatSession)
+                .where(ChatSession.id == self.chat_id)  # type: ignore
+                .values(transcripts=safe_transcripts)
+            )
+            session.commit()

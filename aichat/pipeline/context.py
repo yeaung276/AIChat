@@ -4,16 +4,12 @@ from fastapi import WebSocket
 import spacy
 import torch
 import asyncio
-from sqlmodel import Session, update
 from concurrent.futures import ThreadPoolExecutor
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
-from aichat.db_models.chat import Chat
-from aichat.db_models.db import engine
-from aichat.types import MESSAGE_TYPE_TRANSCRIPT
 from aichat.utils.prompt import build_prompt
 
-nlp = spacy.load("en_core_web_sm")
+
 tokenizer = AutoTokenizer.from_pretrained("unsloth/Qwen3-0.6B-unsloth-bnb-4bit")
 model = AutoModelForCausalLM.from_pretrained(
     "unsloth/Qwen3-0.6B-unsloth-bnb-4bit",
@@ -24,24 +20,23 @@ model = AutoModelForCausalLM.from_pretrained(
 model = torch.compile(model)
 
 class Context:
-    def __init__(self, chat: Chat, ws: WebSocket):
-        self.chat_id = chat.id
-        self.prompt = chat.prompt
-        self.messages = chat.transcripts
-        self.safe_messages = chat.transcripts.copy()
+    def __init__(self, prompt: str, ws: WebSocket):
+        self.prompt = prompt
+        self.messages = []
         self.ws = ws
         self._executor = ThreadPoolExecutor(max_workers=1)
         self._pending = False
+        self._topic_modelling_msg_index = 0
 
     def _get_window(self, min_words: int = 50) -> list[dict] | None:
         window = []
-        for msg in reversed(self.messages):
+        for msg in reversed(self.messages[self._topic_modelling_msg_index:]):
             window.insert(0, msg)
             if sum(len(m["message"].split()) for m in window) >= min_words:
                 return window
         return None
 
-    def _housekeeping(self, window: list[dict]):
+    def _update_topic(self, window: list[dict]):
         conversation = "\n".join(
             f"{m['actor'].upper()}: {m['message']}" for m in window
         )
@@ -55,10 +50,9 @@ class Context:
             f"Situation:"
         )
 
-        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-        print("generating...")
+        inputs = tokenizer(prompt, return_tensors="pt").to(model.device) # type: ignore
         with torch.no_grad():
-            outputs = model.generate(
+            outputs = model.generate( # type: ignore
                 **inputs,
                 max_new_tokens=30,
                 do_sample=False,
@@ -74,44 +68,18 @@ class Context:
             .strip()
         )
 
-        for msg in self.messages[len(self.safe_messages) :]:
-            doc = nlp(msg["message"])
-            result = msg["message"]
-            for ent in reversed(doc.ents):
-                if ent.label_ in {"PERSON", "GPE", "LOC", "ORG"}:
-                    result = (
-                        result[: ent.start_char]
-                        + f"[{ent.label_}]"
-                        + result[ent.end_char :]
-                    )
-            self.safe_messages.append({"actor": msg["actor"], "message": result})
-
-        with Session(engine) as session:
-            session.exec(
-                update(Chat)
-                .where(Chat.id == self.chat_id) # type: ignore
-                .values(transcripts=self.safe_messages, prompt=self.prompt)
-            )
-            session.commit()
-
         self._pending = False
 
     async def add(self, actor: Literal["user", "assistant"], message: str):
         self.messages.append({"actor": actor, "message": message})
-        await self.ws.send_json(
-            {
-                "type": MESSAGE_TYPE_TRANSCRIPT,
-                "data": {"actor": actor, "message": message},
-            }
-        )
 
-        if not self._pending:
-            window = self._get_window()
-            if window:
-                self._pending = True
-                asyncio.get_event_loop().run_in_executor(
-                    self._executor, self._housekeeping, window
-                )
+        window = self._get_window()
+        if not self._pending and window:
+            self._pending = True
+            self._topic_modelling_msg_index += len(window)
+            asyncio.get_event_loop().run_in_executor(
+                self._executor, self._update_topic, window
+            )
 
     async def get_context(self, emotion: str) -> str:
         return build_prompt(

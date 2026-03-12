@@ -1,46 +1,46 @@
 speech:
-- name: zipformer
-  path: "aichat.components.stt.zipformer:ZipformerSTT"
-  config:
-    sample_rate: 16000
-    model_dir: "models/zipformer"
-    device: "cpu"
-- name: dummy
+  # name: zipformer
+  # path: "aichat.components.stt.zipformer:ZipformerSTT"
+  # config:
+  #   sample_rate: 16000
+  #   model_dir: "models/zipformer"
+  #   device: "cpu"
+  name: dummy
   path: "aichat.components.stt.dummy:DummySTT"
   config:
 
 emotion:
-- name: deepface
-  path: "aichat.components.video.deepface:DeepFaceVideoAnalyzer"
-  config:
-    sample_rate: 5 # frame per second
-    decay_rate: 7
-- name: dummy
+  # name: deepface
+  # path: "aichat.components.video.deepface:DeepFaceVideoAnalyzer"
+  # config:
+  #   sample_rate: 5 # frame per second
+  #   decay_rate: 7
+  name: dummy
   path: "aichat.components.video.dummy:DummyVideoAnalyzer"
   config:
 
 llm:
-- name: qwen2.5
-  path: "aichat.components.llm.transformer:Transformer"
-  config:
-    model: unsloth/Qwen2.5-0.5B-unsloth-bnb-4bit
-    temperature: 0.7
-    gpu_utilization: 0.5
-    lora_path: models/qwen2.5-lora
-    lora_name: main
-    lora_rank: 8
-- name: dummy
+  # name: qwen2.5
+  # path: "aichat.components.llm.transformer:Transformer"
+  # config:
+  #   model: unsloth/Qwen2.5-0.5B-unsloth-bnb-4bit
+  #   temperature: 0.7
+  #   gpu_utilization: 0.5
+  #   lora_path: models/qwen2.5-lora
+  #   lora_name: main
+  #   lora_rank: 8
+  name: dummy
   path: "aichat.components.llm.dummy:DummyLLM"
   config:
 
 voice:
-- name: dummy
+  name: dummy
   path: "aichat.components.tts.dummy:DummyTTS"
   config: 
-- name: kokoro
-  path: "aichat.components.tts.kokoro:KokoroTTS"
-  config:
-    device: gpu
+  # name: kokoro
+  # path: "aichat.components.tts.kokoro:KokoroTTS"
+  # config:
+  #   device: gpu
 
 
 

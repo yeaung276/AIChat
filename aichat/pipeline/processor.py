@@ -15,7 +15,7 @@ from aiortc import (
 
 from aichat.pipeline.context import Context
 from aichat.pipeline.factory import ModelFactory
-from aichat.types import MESSAGE_TYPE_AVATAR_SPEAK
+from aichat.types import MESSAGE_TYPE_AVATAR_SPEAK, MESSAGE_TYPE_TRANSCRIPT
 
 
 class ProfiledResult(BaseModel):
@@ -32,9 +32,7 @@ class ProfiledResult(BaseModel):
 class Processor:
     """Processor will collect and segment incoming frames, process each, and sync generated frames for output."""
 
-    def __init__(
-        self, speech: str, video: str, llm: str, tts: str, voice: str, context: Context
-    ):
+    def __init__(self, voice: str, context: Context):
         # I/O
         self.ws: WebSocket
         self.context = context
@@ -42,17 +40,17 @@ class Processor:
         self.tts_queue = asyncio.Queue()
 
         # processors
-        self.stt = ModelFactory.get_speech_model(speech)
-        self.llm = ModelFactory.get_dialogue_model(llm)
-        self.video_analyzer = ModelFactory.get_emotion_model(video)
-        self.tts = ModelFactory.get_voice_model(tts, voice=voice)
+        self.stt = ModelFactory.get_speech_model()
+        self.llm = ModelFactory.get_dialogue_model()
+        self.video_analyzer = ModelFactory.get_emotion_model()
+        self.tts = ModelFactory.get_voice_model(voice=voice)
 
         # tasks
         self.video_task: asyncio.Task | None = None
         self.audio_task: asyncio.Task | None = None
         self.llm_task: asyncio.Task | None = None
         self.tts_task: asyncio.Task | None = None
-        
+
         # metrics
         self.metrics = {
             "session_start": 0.0,
@@ -101,14 +99,20 @@ class Processor:
 
         if self.llm_task:
             self.llm_task.cancel()
-            
+
         turns = self.metrics["session_turns"]
         return {
-            "mean_latency_ms": self.metrics["latency_sum"] / turns if turns else 0.0,
-            "max_latency_ms": self.metrics["max_latency"],
-            "min_latency_ms": self.metrics["min_latency"],
-            "turns": turns,
-            "session_duration_s": time.perf_counter() - self.metrics["session_start"]
+            "metrics": {
+                "mean_latency_ms": (
+                    self.metrics["latency_sum"] / turns if turns else 0.0
+                ),
+                "max_latency_ms": self.metrics["max_latency"],
+                "min_latency_ms": self.metrics["min_latency"],
+                "turns": turns,
+                "session_duration_s": time.perf_counter()
+                - self.metrics["session_start"],
+            },
+            "transcript": self.context.messages,
         }
 
     async def _read_audio_track(self, track: AudioStreamTrack):
@@ -125,8 +129,16 @@ class Processor:
                 await self.llm_queue.put(
                     ProfiledResult(
                         incoming=data.lower(),
-                        profiled=[{"component": "stt_out", "time": time.perf_counter()}],
+                        profiled=[
+                            {"component": "stt_out", "time": time.perf_counter()}
+                        ],
                     )
+                )
+                await self.ws.send_json(
+                    {
+                        "type": MESSAGE_TYPE_TRANSCRIPT,
+                        "data": {"actor": "user", "message": data.lower()},
+                    }
                 )
 
             await asyncio.sleep(0)
@@ -148,7 +160,9 @@ class Processor:
                     response = resp
 
                 data.response = response
-                data.profiled.append({"component": "llm_out", "time": time.perf_counter()})
+                data.profiled.append(
+                    {"component": "llm_out", "time": time.perf_counter()}
+                )
                 t1 = self.tts_queue.put(data)
                 t2 = self.context.add(actor="assistant", message=response)
                 await asyncio.gather(t1, t2)
@@ -160,7 +174,9 @@ class Processor:
             data = await queue.get()
 
             async for audio, meta in self.tts.synthesize(data.response):
-                data.profiled.append({"component": "tts_out", "time": time.perf_counter()})
+                data.profiled.append(
+                    {"component": "tts_out", "time": time.perf_counter()}
+                )
                 await self.ws.send_json(
                     {
                         "type": MESSAGE_TYPE_AVATAR_SPEAK,
@@ -169,6 +185,12 @@ class Processor:
                             "meta": meta,
                             "waterfall": data.profiled,
                         },
+                    }
+                )
+                await self.ws.send_json(
+                    {
+                        "type": MESSAGE_TYPE_TRANSCRIPT,
+                        "data": {"actor": "assistant", "message": data.response},
                     }
                 )
             self.update_metrics(data.profiled)

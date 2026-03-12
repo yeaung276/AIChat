@@ -40,14 +40,14 @@ class Communicator {
   }
 
   async start(
-    chatId,
+    charId,
     onAvatarInitialize = () => null,
     onAvatarSpeak = () => null,
     onAvatarInterrupt = () => null,
     onTranscript = () => null
   ) {
-    if (!chatId) {
-      throw new Error("Chat ID is required");
+    if (!charId) {
+      throw new Error("Char ID is required");
     }
 
     this.onAvatarInitialize = onAvatarInitialize;
@@ -90,7 +90,7 @@ class Communicator {
         JSON.stringify({
           type: MESSAGE_TYPE_SDP_OFFER,
           sdp: this.rtc.localDescription.sdp,
-          chat_id: chatId,
+          character_id: charId,
         })
       );
 

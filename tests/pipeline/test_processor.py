@@ -19,12 +19,7 @@ class TestProcessorInitialization:
         """Should initialize with provided models and memory."""
         mock_memory = Mock()
 
-        processor = Processor(
-            speech="dummy",
-            video="dummy",
-            llm="dummy",
-            tts="dummy",
-            voice="test_voice",
+        processor = Processor(voice="test_voice",
             context=mock_memory
         )
 
@@ -38,9 +33,7 @@ class TestProcessorInitialization:
     def test_processor_tasks_initialize_as_none(self):
         """Should have no running tasks before bind()."""
         mock_memory = Mock()
-        processor = Processor(
-            speech="dummy", video="dummy", llm="dummy", tts="dummy",
-            voice="test_voice", context=mock_memory
+        processor = Processor(voice="test_voice", context=mock_memory
         )
 
         assert processor.video_task is None
@@ -52,9 +45,7 @@ class TestProcessorInitialization:
     async def test_processor_bind_stores_websocket(self, mock_websocket, mock_rtc_peer_connection):
         """Should store WebSocket reference after bind()."""
         mock_memory = Mock()
-        processor = Processor(
-            speech="dummy", video="dummy", llm="dummy", tts="dummy",
-            voice="test_voice", context=mock_memory
+        processor = Processor(voice="test_voice", context=mock_memory
         )
 
         await processor.bind(mock_rtc_peer_connection, mock_websocket)
@@ -68,9 +59,7 @@ class TestProcessorInitialization:
     async def test_processor_bind_registers_track_handler(self, mock_rtc_peer_connection, mock_websocket):
         """Should register 'track' event handler on RTC connection."""
         mock_memory = Mock()
-        processor = Processor(
-            speech="dummy", video="dummy", llm="dummy", tts="dummy",
-            voice="test_voice", context=mock_memory
+        processor = Processor(voice="test_voice", context=mock_memory
         )
 
         await processor.bind(mock_rtc_peer_connection, mock_websocket)
@@ -84,9 +73,7 @@ class TestProcessorInitialization:
     async def test_processor_bind_creates_llm_task(self, mock_rtc_peer_connection, mock_websocket):
         """Should create LLM processing task."""
         mock_memory = Mock()
-        processor = Processor(
-            speech="dummy", video="dummy", llm="dummy", tts="dummy",
-            voice="test_voice", context=mock_memory
+        processor = Processor(voice="test_voice", context=mock_memory
         )
 
         await processor.bind(mock_rtc_peer_connection, mock_websocket)
@@ -100,9 +87,7 @@ class TestProcessorInitialization:
     async def test_processor_bind_creates_tts_task(self, mock_rtc_peer_connection, mock_websocket):
         """Should create TTS processing task."""
         mock_memory = Mock()
-        processor = Processor(
-            speech="dummy", video="dummy", llm="dummy", tts="dummy",
-            voice="test_voice", context=mock_memory
+        processor = Processor(voice="test_voice", context=mock_memory
         )
 
         await processor.bind(mock_rtc_peer_connection, mock_websocket)
@@ -116,9 +101,7 @@ class TestProcessorInitialization:
     async def test_processor_creates_audio_task_on_audio_track(self, mock_websocket, mock_rtc_peer_connection):
         """Should create audio processing task when audio track is received."""
         mock_memory = Mock()
-        processor = Processor(
-            speech="dummy", video="dummy", llm="dummy", tts="dummy",
-            voice="test_voice", context=mock_memory
+        processor = Processor(voice="test_voice", context=mock_memory
         )
         processor.stt.accept = AsyncMock(return_value=None)
 
@@ -145,9 +128,7 @@ class TestProcessorInitialization:
     async def test_processor_creates_video_task_on_video_track(self, mock_websocket, mock_rtc_peer_connection):
         """Should create video processing task when video track is received."""
         mock_memory = Mock()
-        processor = Processor(
-            speech="dummy", video="dummy", llm="dummy", tts="dummy",
-            voice="test_voice", context=mock_memory
+        processor = Processor(voice="test_voice", context=mock_memory
         )
         processor.video_analyzer.accept = AsyncMock()
 
@@ -176,13 +157,12 @@ class TestProcessorAudioPipeline:
     async def test_audio_track_triggers_stt_processing(self, mock_audio_frame, mock_audio_track):
         """Should process audio frames through STT."""
         mock_memory = Mock()
-        processor = Processor(
-            speech="dummy", video="dummy", llm="dummy", tts="dummy",
-            voice="test_voice", context=mock_memory
+        processor = Processor(voice="test_voice", context=mock_memory
         )
 
         # Mock STT to return a message
         processor.stt.accept = AsyncMock(return_value="test transcription")
+        processor.ws = AsyncMock()
 
         # Mock audio track with mock frame
         mock_audio_track.recv.side_effect = [mock_audio_frame, asyncio.CancelledError()]
@@ -204,9 +184,7 @@ class TestProcessorAudioPipeline:
     async def test_audio_track_ignores_none_from_stt(self, mock_audio_frame, mock_audio_track):
         """Should not queue None messages from STT."""
         mock_memory = Mock()
-        processor = Processor(
-            speech="dummy", video="dummy", llm="dummy", tts="dummy",
-            voice="test_voice", context=mock_memory
+        processor = Processor(voice="test_voice", context=mock_memory
         )
 
         # Mock stt to return none
@@ -233,9 +211,7 @@ class TestProcessorVideoPipeline:
     async def test_video_track_sends_frames_to_analyzer(self, mock_video_frame, mock_video_track):
         """Should send video frames to analyzer."""
         mock_memory = Mock()
-        processor = Processor(
-            speech="dummy", video="dummy", llm="dummy", tts="dummy",
-            voice="test_voice", context=mock_memory
+        processor = Processor(voice="test_voice", context=mock_memory
         )
         processor.video_analyzer.accept = AsyncMock()
 
@@ -258,9 +234,7 @@ class TestProcessorLLMPipeline:
         mock_memory.get_context = AsyncMock(return_value="test input")
         mock_memory.add = AsyncMock()
 
-        processor = Processor(
-            speech="dummy", video="dummy", llm="dummy", tts="dummy",
-            voice="test_voice", context=mock_memory
+        processor = Processor(voice="test_voice", context=mock_memory
         )
         processor.ws = mock_websocket
 
@@ -306,9 +280,7 @@ class TestProcessorLLMPipeline:
         mock_memory.get_context = AsyncMock(return_value="context")
         mock_memory.add = AsyncMock()
 
-        processor = Processor(
-            speech="dummy", video="dummy", llm="dummy", tts="dummy",
-            voice="test_voice", context=mock_memory
+        processor = Processor(voice="test_voice", context=mock_memory
         )
         processor.ws = mock_websocket
 
@@ -340,9 +312,7 @@ class TestProcessorTTSPipeline:
     async def test_tts_queue_synthesizes_and_sends_audio(self, mock_websocket):
         """Should synthesize audio from TTS queue and send via WebSocket."""
         mock_memory = AsyncMock()
-        processor = Processor(
-            speech="dummy", video="dummy", llm="dummy", tts="dummy",
-            voice="test_voice", context=mock_memory
+        processor = Processor(voice="test_voice", context=mock_memory
         )
         processor.ws = mock_websocket
 
@@ -374,9 +344,7 @@ class TestProcessorCleanup:
     async def test_close_cancels_all_tasks(self, mock_websocket, mock_rtc_peer_connection):
         """Should cancel all running tasks."""
         mock_memory = Mock()
-        processor = Processor(
-            speech="dummy", video="dummy", llm="dummy", tts="dummy",
-            voice="test_voice", context=mock_memory
+        processor = Processor(voice="test_voice", context=mock_memory
         )
         processor.stt.accept = AsyncMock(return_value=None)
         processor.video_analyzer.accept = AsyncMock()

@@ -8,10 +8,9 @@ Testing Strategy:
 """
 import pytest
 from unittest.mock import AsyncMock, MagicMock, Mock, patch, call
-from aiortc import RTCSessionDescription
 
 from aichat.pipeline.manager import ConnectionManager
-from aichat.db_models.chat import Chat
+from aichat.db_models.chat import Character
 from aichat.types import MESSAGE_TYPE_AVATAR_INITIALIZE
 
 
@@ -23,20 +22,18 @@ class TestConnectionManager:
         """Create ConnectionManager instance."""
         ConnectionManager._conns.clear()
         m = ConnectionManager()
-        with patch.object(m, "_save_metrics", return_value=MagicMock(id=1)):
+        with patch.object(m, "_save_summary", return_value=MagicMock(id=1)):
             yield m
         ConnectionManager._conns.clear()
 
     @pytest.fixture
     def mock_chat(self):
         """Create mock Chat object."""
-        chat = Mock(spec=Chat)
+        chat = Mock(spec=Character)
         chat.id = 123
         chat.voice = "test_voice"
         chat.face = "test_face"
-        chat.llm = "dummy"
         chat.prompt = "You are a helpful assistant"
-        chat.transcripts = []
         return chat
 
     @pytest.mark.asyncio
@@ -61,17 +58,14 @@ class TestConnectionManager:
 
                     # Assert - Memory created with correct args
                     mock_memory_cls.assert_called_once_with(
-                        chat=mock_chat,
+                        prompt=mock_chat.prompt,
                         ws=mock_websocket
                     )
 
                     # Assert - Processor created with correct args
                     mock_processor_cls.assert_called_once()
                     call_kwargs = mock_processor_cls.call_args.kwargs
-                    assert call_kwargs["speech"] == "zipformer"
-                    assert call_kwargs["video"] == "deepface"
-                    assert call_kwargs["llm"] == "dummy"
-                    assert call_kwargs["voice"] == "test_voice"
+                    assert call_kwargs["voice"] == mock_chat.voice
                     assert call_kwargs["context"] == mock_memory
 
                     # Assert - Processor bound to RTC and WebSocket
@@ -227,8 +221,8 @@ class TestConnectionManager:
         self, manager, mock_websocket
     ):
         """Should handle multiple concurrent connections."""
-        chat1 = Mock(spec=Chat, id=1, voice="voice1", face="face1", llm="dummy", transcripts=[])
-        chat2 = Mock(spec=Chat, id=2, voice="voice2", face="face2", llm="dummy", transcripts=[])
+        chat1 = Mock(spec=Character, id=1, voice="voice1", face="face1")
+        chat2 = Mock(spec=Character, id=2, voice="voice2", face="face2")
 
         mock_rtc1 = Mock()
         mock_rtc1.connectionState = "new"

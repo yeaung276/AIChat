@@ -1,6 +1,5 @@
 import logging
 import importlib
-from typing import Tuple
 
 from aichat.components.stt.base import STT
 from aichat.components.llm.base import LLM
@@ -13,10 +12,10 @@ logger = logging.getLogger(__name__)
 class ModelFactory:
     """Factory for initialize and creation of per connection models"""
 
-    supported_speech = {}
-    supported_llm = {}
-    supported_emotion_analyzer = {}
-    supported_tts = {}
+    supported_speech = None
+    supported_llm = None
+    supported_emotion_analyzer = None
+    supported_tts = None
     supported_faces = {}
 
     @classmethod
@@ -25,21 +24,21 @@ class ModelFactory:
 
         # STT model initializing and configuration
         logger.info("initializing and loading speech modules...")
-        cls.supported_speech = cls._import_modules(config.get("speech", []))
+        cls.supported_speech = cls._load_component(config.get("speech", {}))
 
         # Video model initializing and configuration
         logger.info("initializing and loading video modules...")
-        cls.supported_emotion_analyzer = cls._import_modules(
-            config.get("emotion", [])
+        cls.supported_emotion_analyzer = cls._load_component(
+            config.get("emotion", {})
         )
 
         # LLM model initializing and configuration
         logger.info("initializing and loading llm modules...")
-        cls.supported_llm = cls._import_modules(config.get("llm", []))
+        cls.supported_llm = cls._load_component(config.get("llm", {}))
         
         # TTS model initialization and configuration
         logger.info("initializing and loading voice model...")
-        cls.supported_tts = cls._import_modules(config.get("voice", []))
+        cls.supported_tts = cls._load_component(config.get("voice", {}))
 
         # Voice and Face initializing
         logger.info("initializing and loading faces and voices...")
@@ -51,40 +50,31 @@ class ModelFactory:
             }
 
     @classmethod
-    def get_dialogue_model(cls, name: str, **kwargs) -> LLM:
-        llm_model = None
-        if name not in cls.supported_llm:
-            raise ValueError(
-                f"{name} is not supported llm. Supported models are {", ".join(cls.supported_llm.keys())}"
-            )
+    def get_dialogue_model(cls, **kwargs) -> LLM:
+        if cls.supported_llm is None:
+            raise ValueError("LLM component not configured yet.")
 
-        return cls.supported_llm[name](**kwargs)
+        return cls.supported_llm(**kwargs)
 
     @classmethod
-    def get_speech_model(cls, name: str, **kwargs) -> STT:
-        if name not in cls.supported_speech:
-            raise ValueError(
-                f"{name} is not supported speech model. Supported models are {", ".join(cls.supported_speech.keys())}"
-            )
+    def get_speech_model(cls, **kwargs) -> STT:
+        if cls.supported_speech is None:
+            raise ValueError("speech analysis model not configured yet.")
 
-        return cls.supported_speech[name](**kwargs)
+        return cls.supported_speech(**kwargs)
 
     @classmethod
-    def get_emotion_model(cls, name, **kwargs) -> VideoAnalyzer:
-        if name not in cls.supported_emotion_analyzer:
-            raise ValueError(
-                f"{name} is not supported video model. Supported models are {", ".join(cls.supported_emotion_analyzer.keys())}"
-            )
+    def get_emotion_model(cls, **kwargs) -> VideoAnalyzer:
+        if cls.supported_emotion_analyzer is None:
+            raise ValueError("facial analysis model not configured yet.")
 
-        return cls.supported_emotion_analyzer[name](**kwargs)
+        return cls.supported_emotion_analyzer(**kwargs)
     
     @classmethod
-    def get_voice_model(cls, name, **kwargs) -> TTS:
-        if name not in cls.supported_tts:
-            raise ValueError(
-                f"{name} is not supported tts. Supported models are {", ".join(cls.supported_tts.keys())}"
-            )
-        return cls.supported_tts[name](**kwargs)
+    def get_voice_model(cls, **kwargs) -> TTS:
+        if cls.supported_tts is None:
+            raise ValueError("speech synthesis model not configured yet.")
+        return cls.supported_tts(**kwargs)
 
     @classmethod
     def get_avatar(cls, name: str):
@@ -95,40 +85,34 @@ class ModelFactory:
         return cls.supported_faces[name]
 
     @staticmethod
-    def _import_modules(modules: list[dict]):
+    def _load_component(conf: dict):
         """Load modules based on configuration"""
 
-        supported_modules = {}
-        for conf in modules:
-            # Parameter check
-            if not conf.get("name"):
-                logger.warning("name is missing in one of the module. skipping...")
-                continue
+        # Parameter check
+        if not conf.get("name"):
+            logger.error("name is missing in one of the module")
+            raise ValueError("name is missing")
 
-            # Parameter check
-            if not conf.get("path"):
-                logger.warning("path is missing in one of the module. skipping...")
-                continue
+        # Parameter check
+        if not conf.get("path"):
+            logger.error("path is missing in one of the module. skipping...")
+            raise ValueError("path is missing.")
 
-            # Loading the module
-            logger.info("loading %s", conf["name"])
-            module = ModelFactory._import_module(conf["path"])
+        # Loading the module
+        logger.info("loading %s", conf["name"])
+        module = ModelFactory._import_module(conf["path"])
 
-            # Initial Configuration
-            logger.info("  configuring %s", conf["name"])
-            if not hasattr(module, "configure"):
-                logger.warning("configure method is missing. skipping...")
-                continue
-            try:
-                module.configure(**conf["config"] or {})
-            except Exception as e:
-                logger.warning("fail to configure module %s. %s", conf["name"], e)
-                continue
+        # Initial Configuration
+        logger.info("  configuring %s", conf["name"])
+        if not hasattr(module, "configure"):
+            logger.error("configure method is missing.")
+            raise ValueError("configure method is missing in the component.")
 
-            supported_modules[conf["name"]] = module
-            logger.info("%s loaded.", conf["name"])
+        module.configure(**conf["config"] or {})
 
-        return supported_modules
+        logger.info("%s loaded.", conf["name"])
+
+        return module
 
     @staticmethod
     def _import_module(path: str):

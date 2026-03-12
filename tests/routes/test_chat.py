@@ -9,7 +9,7 @@ Testing Strategy:
 """
 from sqlmodel import select
 
-from aichat.db_models.chat import Chat
+from aichat.db_models.chat import Character
 from aichat.security.auth import SESSION_COOKIE_NAME
 
 
@@ -33,7 +33,7 @@ class TestCreateChat:
 
         # Create chat
         response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "agent": {
                     "voice": "af_bella",
@@ -53,10 +53,9 @@ class TestCreateChat:
         assert data["prompt"] == "You are a helpful assistant"
         assert data["id"] is not None
         assert data["user_id"] == register_response.json()["id"]
-        assert data["transcripts"] == []
-
+        
         # Verify chat was created in database
-        chat = test_db.exec(select(Chat).where(Chat.id == data["id"])).first()
+        chat = test_db.exec(select(Character).where(Character.id == data["id"])).first()
         assert chat is not None
         assert chat.name == "test_name"
         assert chat.voice == "af_bella"
@@ -78,7 +77,7 @@ class TestCreateChat:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "name": "test_name",
                 "agent": {
@@ -97,7 +96,7 @@ class TestCreateChat:
     def test_create_chat_requires_authentication(self, test_client):
         """Should return 401 when not authenticated."""
         response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "agent": {
                     "voice": "af_bella",
@@ -114,7 +113,7 @@ class TestCreateChat:
         """Should return 401 for invalid session token."""
         cookies = {SESSION_COOKIE_NAME: "invalid_token_here"}
         response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "agent": {
                     "voice": "af_bella",
@@ -145,7 +144,7 @@ class TestCreateChat:
 
         # Create first chat
         response1 = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "name": "test_name",
                 "agent": {
@@ -159,7 +158,7 @@ class TestCreateChat:
 
         # Create second chat
         response2 = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "name": "test_name_2",
                 "agent": {
@@ -176,7 +175,7 @@ class TestCreateChat:
         assert response1.json()["id"] != response2.json()["id"]
 
         # Verify both chats exist in database
-        chats = test_db.exec(select(Chat).where(Chat.user_id == user_id)).all()
+        chats = test_db.exec(select(Character).where(Character.user_id == user_id)).all()
         assert len(chats) == 2
 
 
@@ -199,7 +198,7 @@ class TestGetChats:
 
         # Create multiple chats
         test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "name": "test1",
                 "agent": {
@@ -211,7 +210,7 @@ class TestGetChats:
             cookies=cookies
         )
         test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "name": "test2",
                 "agent": {
@@ -224,7 +223,7 @@ class TestGetChats:
         )
 
         # Get all chats
-        response = test_client.get("/api/chats", cookies=cookies)
+        response = test_client.get("/api/characters", cookies=cookies)
 
         assert response.status_code == 200
         data = response.json()
@@ -248,14 +247,14 @@ class TestGetChats:
         )
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
-        response = test_client.get("/api/chats", cookies=cookies)
+        response = test_client.get("/api/characters", cookies=cookies)
 
         assert response.status_code == 200
         assert response.json() == []
 
     def test_get_chats_requires_authentication(self, test_client):
         """Should return 401 when not authenticated."""
-        response = test_client.get("/api/chats")
+        response = test_client.get("/api/characters")
 
         assert response.status_code == 401
         assert response.json()["detail"] == "Not authenticated"
@@ -276,7 +275,7 @@ class TestGetChats:
 
         # Create chat for first user
         test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "name": "test1",
                 "agent": {
@@ -302,7 +301,7 @@ class TestGetChats:
 
         # Create chat for second user
         test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "name": "test2",
                 "agent": {
@@ -315,7 +314,7 @@ class TestGetChats:
         )
 
         # Get chats for second user
-        response = test_client.get("/api/chats", cookies=cookies2)
+        response = test_client.get("/api/characters", cookies=cookies2)
 
         assert response.status_code == 200
         data = response.json()
@@ -342,7 +341,7 @@ class TestGetChatById:
 
         # Create chat
         create_response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "name": "test",
                 "agent": {
@@ -356,7 +355,7 @@ class TestGetChatById:
         chat_id = create_response.json()["id"]
 
         # Get chat by ID
-        response = test_client.get(f"/api/chat/{chat_id}", cookies=cookies)
+        response = test_client.get(f"/api/character/{chat_id}", cookies=cookies)
 
         assert response.status_code == 200
         data = response.json()
@@ -380,14 +379,14 @@ class TestGetChatById:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         # Try to get non-existent chat
-        response = test_client.get("/api/chat/99999", cookies=cookies)
+        response = test_client.get("/api/character/99999", cookies=cookies)
 
         assert response.status_code == 404
         assert response.json()["detail"] == "Chat not found."
 
     def test_get_chat_by_id_requires_authentication(self, test_client):
         """Should return 401 when not authenticated."""
-        response = test_client.get("/api/chat/1")
+        response = test_client.get("/api/character/1")
 
         assert response.status_code == 401
         assert response.json()["detail"] == "Not authenticated"
@@ -407,7 +406,7 @@ class TestGetChatById:
         cookies1 = {SESSION_COOKIE_NAME: register_response1.cookies[SESSION_COOKIE_NAME]}
 
         create_response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "name": "test",
                 "agent": {
@@ -433,7 +432,7 @@ class TestGetChatById:
         cookies2 = {SESSION_COOKIE_NAME: register_response2.cookies[SESSION_COOKIE_NAME]}
 
         # Try to access first user's chat
-        response = test_client.get(f"/api/chat/{chat_id}", cookies=cookies2)
+        response = test_client.get(f"/api/character/{chat_id}", cookies=cookies2)
 
         assert response.status_code == 404
         assert response.json()["detail"] == "Chat not found."
@@ -457,7 +456,7 @@ class TestRequestValidation:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={},
             cookies=cookies
         )
@@ -479,7 +478,7 @@ class TestRequestValidation:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "name": 'test',
                 "agent": {
@@ -509,7 +508,7 @@ class TestRequestValidation:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "name": "test",
                 "agent": {
@@ -539,7 +538,7 @@ class TestRequestValidation:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "name": "test",
                 "agent": {
@@ -568,7 +567,7 @@ class TestRequestValidation:
         )
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
-        response = test_client.get("/api/chat/invalid", cookies=cookies)
+        response = test_client.get("/api/character/invalid", cookies=cookies)
 
         assert response.status_code == 422
 
@@ -592,7 +591,7 @@ class TestChatFlows:
 
         # Create chat
         create_response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "name": "test",
                 "agent": {
@@ -607,12 +606,12 @@ class TestChatFlows:
         chat_id = create_response.json()["id"]
 
         # Get all chats
-        list_response = test_client.get("/api/chats", cookies=cookies)
+        list_response = test_client.get("/api/characters", cookies=cookies)
         assert list_response.status_code == 200
         assert len(list_response.json()) == 1
 
         # Get specific chat
-        get_response = test_client.get(f"/api/chat/{chat_id}", cookies=cookies)
+        get_response = test_client.get(f"/api/character/{chat_id}", cookies=cookies)
         assert get_response.status_code == 200
         assert get_response.json()["id"] == chat_id
         assert get_response.json()["prompt"] == "Flow test chat"
@@ -635,7 +634,7 @@ class TestChatFlows:
         chat_ids = []
         for i in range(3):
             response = test_client.post(
-                "/api/chat",
+                "/api/character",
                 json={
                     "name": "test",
                     "agent": {
@@ -650,7 +649,7 @@ class TestChatFlows:
             chat_ids.append(response.json()["id"])
 
         # List all chats
-        list_response = test_client.get("/api/chats", cookies=cookies)
+        list_response = test_client.get("/api/characters", cookies=cookies)
         assert list_response.status_code == 200
         chats = list_response.json()
         assert len(chats) == 3
@@ -679,7 +678,7 @@ class TestEdgeCases:
 
         long_prompt = "A" * 10000
         response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "agent": {
                     "voice": "af_bella",
@@ -709,7 +708,7 @@ class TestEdgeCases:
         )
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
-        response = test_client.get("/api/chat/0", cookies=cookies)
+        response = test_client.get("/api/character/0", cookies=cookies)
 
         # Should return 404 as ID 0 typically doesn't exist
         assert response.status_code == 404
@@ -728,7 +727,7 @@ class TestEdgeCases:
         )
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
-        response = test_client.get("/api/chat/-1", cookies=cookies)
+        response = test_client.get("/api/character/-1", cookies=cookies)
 
         # Should return 404 or 422
         assert response.status_code in [404, 422]
@@ -749,17 +748,17 @@ class TestEdgeCases:
 
         # Multiple operations with same session
         create1 = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={"agent": {"voice": "af_bella", "face": "julia", "prompt": "Chat 1"}, "name": "test1"},
             cookies=cookies
         )
         create2 = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={"agent": {"voice": "af_bella", "face": "julia", "prompt": "Chat 2"}, "name": "test2"},
             cookies=cookies
         )
-        list_chats = test_client.get("/api/chats", cookies=cookies)
-        get_chat = test_client.get(f"/api/chat/{create1.json()['id']}", cookies=cookies)
+        list_chats = test_client.get("/api/characters", cookies=cookies)
+        get_chat = test_client.get(f"/api/character/{create1.json()['id']}", cookies=cookies)
 
         assert create1.status_code == 200
         assert create2.status_code == 200

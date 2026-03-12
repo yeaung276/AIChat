@@ -7,11 +7,10 @@ Testing Strategy:
 - Database interaction with in-memory SQLite
 """
 import pytest
-from unittest.mock import patch
 from sqlmodel import select
 
 from aichat.db_models.user import User
-from aichat.security.auth import hash_password, SESSION_COOKIE_NAME
+from aichat.security.auth import SESSION_COOKIE_NAME
 
 
 class TestUserRegistration:

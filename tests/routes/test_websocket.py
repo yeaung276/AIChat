@@ -7,11 +7,11 @@ Testing Strategy:
 """
 import pytest
 import json
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import Mock, patch
 from sqlmodel import select
 
 from aichat.types import MESSAGE_TYPE_SDP_ANSWER, MESSAGE_TYPE_SDP_OFFER
-from aichat.db_models.chat import Chat
+from aichat.db_models.chat import Character
 from aichat.security.auth import SESSION_COOKIE_NAME
 
 
@@ -34,7 +34,7 @@ class TestWebSocketSdpExchange:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         chat_response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "agent": {
                     "voice": "af_bella",
@@ -57,7 +57,7 @@ class TestWebSocketSdpExchange:
             # Setup websocket to receive one SDP offer
             offer_message = json.dumps({
                 "type": MESSAGE_TYPE_SDP_OFFER,
-                "chat_id": chat_id,
+                "character_id": chat_id,
                 "sdp": "test_offer_sdp"
             })
 
@@ -71,7 +71,7 @@ class TestWebSocketSdpExchange:
 
             # Mock the user and db dependencies
             user = register_response.json()
-            chat = test_db.exec(select(Chat).where(Chat.id == chat_id)).first()
+            chat = test_db.exec(select(Character).where(Character.id == chat_id)).first()
 
             await sdp_exchange(mock_websocket, user=Mock(id=user["id"]), db=test_db)
 
@@ -124,7 +124,7 @@ class TestWebSocketSdpExchange:
         # Verify error was sent
         mock_websocket.send_json.assert_called_with({
             "type": "error",
-            "message": "chat_id is required."
+            "message": "character_id is required."
         })
 
     @pytest.mark.asyncio
@@ -144,7 +144,7 @@ class TestWebSocketSdpExchange:
         # Setup websocket with non-existent chat_id
         offer_message = json.dumps({
             "type": MESSAGE_TYPE_SDP_OFFER,
-            "chat_id": 99999,
+            "character_id": 99999,
             "sdp": "test_offer_sdp"
         })
 
@@ -161,7 +161,7 @@ class TestWebSocketSdpExchange:
         # Verify error was sent
         mock_websocket.send_json.assert_called_with({
             "type": "error",
-            "message": "chat not found."
+            "message": "character not found."
         })
 
     @pytest.mark.asyncio
@@ -180,7 +180,7 @@ class TestWebSocketSdpExchange:
         cookies1 = {SESSION_COOKIE_NAME: user1_response.cookies[SESSION_COOKIE_NAME]}
 
         chat_response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "agent": {
                     "voice": "af_bella",
@@ -208,7 +208,7 @@ class TestWebSocketSdpExchange:
         # Setup websocket trying to access first user's chat
         offer_message = json.dumps({
             "type": MESSAGE_TYPE_SDP_OFFER,
-            "chat_id": chat_id,
+            "character_id": chat_id,
             "sdp": "test_offer_sdp"
         })
 
@@ -225,7 +225,7 @@ class TestWebSocketSdpExchange:
         # Verify error was sent (chat not found because of ownership check)
         mock_websocket.send_json.assert_called_with({
             "type": "error",
-            "message": "chat not found."
+            "message": "character not found."
         })
 
     @pytest.mark.asyncio
@@ -280,7 +280,7 @@ class TestWebSocketSdpExchange:
         cookies = {SESSION_COOKIE_NAME: register_response.cookies[SESSION_COOKIE_NAME]}
 
         chat_response = test_client.post(
-            "/api/chat",
+            "/api/character",
             json={
                 "agent": {
                     "voice": "af_bella",
@@ -301,7 +301,7 @@ class TestWebSocketSdpExchange:
             # Setup websocket to receive one SDP offer
             offer_message = json.dumps({
                 "type": MESSAGE_TYPE_SDP_OFFER,
-                "chat_id": chat_id,
+                "character_id": chat_id,
                 "sdp": "test_offer_sdp"
             })
 

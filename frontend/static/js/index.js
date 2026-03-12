@@ -64,7 +64,7 @@ async function checkAuth() {
 
 async function loadChats() {
   try {
-    const response = await fetch("/api/chats");
+    const response = await fetch("/api/characters");
     if (!response.ok) throw new Error("Failed to load chats");
 
     chats = await response.json();
@@ -115,7 +115,6 @@ function renderChats() {
 
 // Logout
 logoutBtn.addEventListener("click", async () => {
-  // Clear session and redirect
   document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   window.location.href = "/login";
 });
@@ -129,29 +128,7 @@ function selectChat(chat) {
   currentChat = chat;
   renderChats();
 
-  // Show dial button when chat is selected
   dialBtn.hidden = false;
-
-  // Load transcript
-  loadTranscript(chat);
-}
-
-async function loadTranscript(chat) {
-  try {
-    const response = await fetch(`/api/chat/${chat.id}`);
-    if (!response.ok) throw new Error("Failed to load transcript");
-
-    const chatData = await response.json();
-    transcriptMessages.innerHTML = "";
-
-    if (chatData.transcripts && chatData.transcripts.length > 0) {
-      chatData.transcripts.forEach((msg) => {
-        pushMessage(msg.message, msg.actor === "user" ? "right" : "left");
-      });
-    }
-  } catch (error) {
-    console.error("Error loading transcript:", error);
-  }
 }
 
 // Call buttons
@@ -234,7 +211,7 @@ characterForm.addEventListener("submit", async (e) => {
   }
 
   try {
-    const response = await fetch("/api/chat", {
+    const response = await fetch("/api/character", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

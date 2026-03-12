@@ -7,7 +7,7 @@ from sqlmodel import select
 from fastapi import APIRouter, WebSocket, Depends
 from fastapi.exceptions import HTTPException
 
-from aichat.db_models.chat import Chat, Feedback
+from aichat.db_models.chat import Character, ChatSession
 from aichat.schemas.chat import ChatRequest, FeedbackRequest
 from aichat.security.auth import get_current_user, get_current_user_ws
 from aichat.db_models.db import get_session, Session
@@ -30,24 +30,24 @@ async def sdp_exchange(
             data = json.loads(message)
 
             if data.get("type") == MESSAGE_TYPE_SDP_OFFER:
-                if not data.get("chat_id"):
+                if not data.get("character_id"):
                     await ws.send_json(
-                        {"type": "error", "message": "chat_id is required."}
+                        {"type": "error", "message": "character_id is required."}
                     )
                     continue
 
-                chat = db.exec(
-                    select(Chat)
-                    .where(Chat.id == data.get("chat_id"))
-                    .where(Chat.user_id == user.id)
+                char = db.exec(
+                    select(Character)
+                    .where(Character.id == data.get("character_id"))
+                    .where(Character.user_id == user.id)
                 ).first()
-                if not chat:
-                    await ws.send_json({"type": "error", "message": "chat not found."})
+                if not char:
+                    await ws.send_json({"type": "error", "message": "character not found."})
                     continue
 
-                logging.info("accepting sdp offer and initializing chat ...")
+                logging.info("accepting sdp offer and initializing character ...")
 
-                answer = await conn_mg.register(chat, data["sdp"], ws=ws)
+                answer = await conn_mg.register(char, data["sdp"], ws=ws)
                 await ws.send_json(
                     {
                         "type": MESSAGE_TYPE_SDP_ANSWER,
@@ -65,11 +65,11 @@ async def sdp_exchange(
         logging.error(e)
 
 
-@router.post("/chat")
-async def create_chat(
+@router.post("/character")
+async def create_character(
     req: ChatRequest, user=Depends(get_current_user), db=Depends(get_session)
-) -> Chat:
-    chat = Chat(
+) -> Character:
+    chat = Character(
         name=req.name,
         voice=req.agent.voice,
         face=req.agent.face,
@@ -84,19 +84,19 @@ async def create_chat(
     return chat
 
 
-@router.get("/chats")
-async def get_chats(
+@router.get("/characters")
+async def get_characters(
     user=Depends(get_current_user), db=Depends(get_session)
-) -> List[Chat]:
-    return db.exec(select(Chat).where(Chat.user_id == user.id)).all()
+) -> List[Character]:
+    return db.exec(select(Character).where(Character.user_id == user.id)).all()
 
 
-@router.get("/chat/{id}")
+@router.get("/character/{id}")
 async def get_transcript(
     id: int, user=Depends(get_current_user), db=Depends(get_session)
-) -> Chat:
+) -> Character:
     chat = db.exec(
-        select(Chat).where(Chat.user_id == user.id).where(Chat.id == id)
+        select(Character).where(Character.user_id == user.id).where(Character.id == id)
     ).first()
     if chat is None:
         raise HTTPException(status_code=404, detail="Chat not found.")
@@ -104,7 +104,7 @@ async def get_transcript(
 
 @router.post("/feedback")
 async def submit_feedback(req: FeedbackRequest, db: Session = Depends(get_session)):
-    feedback = db.get(Feedback, req.session_id)
+    feedback = db.get(ChatSession, req.session_id)
     if feedback is None:
         raise HTTPException(status_code=404, detail="Feedback session not found.")
 
@@ -112,6 +112,6 @@ async def submit_feedback(req: FeedbackRequest, db: Session = Depends(get_sessio
     feedback.q2_rating = req.q2
     feedback.q3_rating = req.q3
     feedback.q4_rating = req.q4
-    feedback.q5_answer = req.q5
+    feedback.q5_answer = req.q5 or ""
 
     db.commit()
