@@ -6,7 +6,7 @@ from aichat.components.llm.base import LLM
 from aichat.components.video.base import VideoAnalyzer
 from aichat.components.tts.base import TTS
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("uvicorn")
 
 
 class ModelFactory:
@@ -99,7 +99,7 @@ class ModelFactory:
             raise ValueError("path is missing.")
 
         # Loading the module
-        logger.info("loading %s", conf["name"])
+        logger.info("  loading %s", conf["name"])
         module = ModelFactory._import_module(conf["path"])
 
         # Initial Configuration
@@ -110,7 +110,7 @@ class ModelFactory:
 
         module.configure(**conf["config"] or {})
 
-        logger.info("%s loaded.", conf["name"])
+        logger.info("  %s loaded.", conf["name"])
 
         return module
 

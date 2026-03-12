@@ -2,6 +2,9 @@ import logging
 import asyncio
 from typing import Dict, Tuple, cast
 
+from presidio_analyzer import AnalyzerEngine
+from presidio_analyzer.nlp_engine import NlpEngineProvider
+from presidio_anonymizer import AnonymizerEngine
 from fastapi import WebSocket
 from aiortc import RTCPeerConnection, RTCSessionDescription
 
@@ -16,6 +19,22 @@ from aichat.types import MESSAGE_TYPE_AVATAR_INITIALIZE, MESSAGE_TYPE_FEEDBACK_I
 
 
 logger = logging.getLogger(__name__)
+
+pii_analyzer: AnalyzerEngine | None = None
+anonymizer: AnonymizerEngine | None = None
+
+def get_presidio_analyzers():
+    global pii_analyzer, anonymizer
+    if pii_analyzer is None:
+        provider = NlpEngineProvider(nlp_configuration={
+            "nlp_engine_name": "spacy",
+            "models": [{"lang_code": "en", "model_name": "en_core_web_sm"}]
+        })
+        pii_analyzer = AnalyzerEngine(nlp_engine=provider.create_engine())
+    if anonymizer is None:
+        anonymizer = AnonymizerEngine()
+    
+    return pii_analyzer, anonymizer
 
 
 class ConnectionManager:
@@ -111,32 +130,24 @@ class ConnectionManager:
             session.refresh(feedback)
 
         loop = asyncio.get_event_loop()
-        loop.run_in_executor(None, self._save_transcript, summary["transcript"])
+        loop.run_in_executor(None, self._save_transcript, summary["transcript"], cast(int, feedback.id))
 
         return feedback
 
-    def _save_transcript(self, transcripts: list):
-        import spacy
-
-        nlp = spacy.load("en_core_web_sm")
-
+    def _save_transcript(self, transcripts: list, sess_id: int):
+        analyzer, anonymizer = get_presidio_analyzers()
+        
         safe_transcripts = []
         for msg in transcripts:
-            doc = nlp(msg["message"])
-            result = msg["message"]
-            for ent in reversed(doc.ents):
-                if ent.label_ in {"PERSON", "GPE", "LOC", "ORG"}:
-                    result = (
-                        result[: ent.start_char]
-                        + f"[{ent.label_}]"
-                        + result[ent.end_char :]
-                    )
-                safe_transcripts.append({"actor": msg["actor"], "message": result})
+            results = analyzer.analyze(text=msg["message"], language="en")
+            cleaned = anonymizer.anonymize(text=msg["message"], analyzer_results=results) # type: ignore
+            safe_transcripts.append({"actor": msg["actor"], "message": cleaned.text})
 
+        print("saving transcript to sess id ", sess_id, safe_transcripts)
         with Session(engine) as session:
             session.exec(
                 update(ChatSession)
-                .where(ChatSession.id == self.chat_id)  # type: ignore
+                .where(ChatSession.id == sess_id)  # type: ignore
                 .values(transcripts=safe_transcripts)
             )
             session.commit()

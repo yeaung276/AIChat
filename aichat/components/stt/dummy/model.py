@@ -9,7 +9,7 @@ class DummySTT:
     def configure(cls, **kwargs):
         pass
 
-    def __init__(self, interval_sec: float = 20.0, **kwargs):
+    def __init__(self, interval_sec: float = 10.0, **kwargs):
         self.interval = interval_sec
         self._last_emit = 0.0
         self.sample_rate= 16_000
@@ -20,7 +20,6 @@ class DummySTT:
         # If enough time has passed, emit a string and reset timer
         if now - self._last_emit >= self.interval:
             self._last_emit = now
-            return "This is output from dummy stt component"
+            return "Hello, my name is Andrew and I live in Bangkok, thailand"
 
-        # Otherwise return nothing
         return None

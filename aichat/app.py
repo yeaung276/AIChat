@@ -13,7 +13,7 @@ from fastapi.responses import FileResponse
 
 from aichat.db_models.db import engine
 from aichat.pipeline.factory import ModelFactory
-from aichat.routes import chatRouter, userRouter
+from aichat.routes import chatRouter, userRouter, adminRouter
 
 logger = logging.getLogger("uvicorn")
 
@@ -52,6 +52,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.include_router(chatRouter)
 app.include_router(userRouter)
+app.include_router(adminRouter)
 app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 
 
