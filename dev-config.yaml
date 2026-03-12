@@ -1,0 +1,39 @@
+speech:
+  name: dummy
+  path: "aichat.components.stt.dummy:DummySTT"
+  config:
+
+emotion:
+  name: dummy
+  path: "aichat.components.video.dummy:DummyVideoAnalyzer"
+  config:
+
+llm:
+  name: dummy
+  path: "aichat.components.llm.dummy:DummyLLM"
+  config:
+
+voice:
+  name: dummy
+  path: "aichat.components.tts.dummy:DummyTTS"
+  config: 
+
+
+
+avatars:
+  faces:
+    - name: julia
+      path: /static/assets/avatars/julia.glb
+      gender: F
+      mode: neutral
+    - name: david
+      path: /static/assets/avatars/julia.glb
+      gender: M
+      mode: neutral
+  voices:
+    - name: af_bella
+      path: /static/assets/voices/af_bella.bin
+    - name: am_fenrir
+      path: /static/assets/voices/af_bella.bin
+
+      
