@@ -1,7 +1,5 @@
 from typing import Literal
-from fastapi import WebSocket
 
-import spacy
 import torch
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -18,6 +16,7 @@ model = AutoModelForCausalLM.from_pretrained(
 )
 model = torch.compile(model)
 
+
 class Context:
     def __init__(self, prompt: str):
         self.prompt = prompt
@@ -28,7 +27,7 @@ class Context:
 
     def _get_window(self, min_words: int = 50) -> list[dict] | None:
         window = []
-        for msg in reversed(self.messages[self._topic_modelling_msg_index:]):
+        for msg in reversed(self.messages[self._topic_modelling_msg_index :]):
             window.insert(0, msg)
             if sum(len(m["message"].split()) for m in window) >= min_words:
                 return window
@@ -48,9 +47,9 @@ class Context:
             f"Situation:"
         )
 
-        inputs = tokenizer(prompt, return_tensors="pt").to(model.device) # type: ignore
+        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)  # type: ignore
         with torch.no_grad():
-            outputs = model.generate( # type: ignore
+            outputs = model.generate(  # type: ignore
                 **inputs,
                 max_new_tokens=30,
                 do_sample=False,
@@ -79,7 +78,10 @@ class Context:
                 self._executor, self._update_topic, window
             )
 
-    async def get_context(self, emotion: str | None) -> str:
+    async def get_context(self, emotion: str | None, length: str = "medium") -> str:
         return build_prompt(
-            situation=self.prompt, emotion=emotion, user=self.messages[-1]["message"]
+            situation=self.prompt,
+            emotion=emotion,
+            user=self.messages[-1]["message"],
+            answer_type=length,
         )
