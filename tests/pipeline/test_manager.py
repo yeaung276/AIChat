@@ -59,7 +59,6 @@ class TestConnectionManager:
                     # Assert - Memory created with correct args
                     mock_memory_cls.assert_called_once_with(
                         prompt=mock_chat.prompt,
-                        ws=mock_websocket
                     )
 
                     # Assert - Processor created with correct args

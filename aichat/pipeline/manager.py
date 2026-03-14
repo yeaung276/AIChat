@@ -46,7 +46,7 @@ class ConnectionManager:
         self, char: Character, sdp: str, ws: WebSocket
     ) -> RTCSessionDescription:
         # Create a memory
-        mem = Context(prompt=char.prompt, ws=ws)
+        mem = Context(prompt=char.prompt)
         # Create a processor
         proc = Processor(voice=char.voice, context=mem)
 

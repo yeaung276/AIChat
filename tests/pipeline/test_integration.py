@@ -60,7 +60,7 @@ class TestProcessorIntegration:
     async def test_full_audio_to_llm_to_websocket_flow(self, mock_websocket, mock_rtc_peer_connection, mock_audio_frame, mock_audio_track, test_db, test_chat):
         """Should process: audio -> STT -> LLM queue -> LLM -> Memory -> WebSocket."""
 
-        mem = Context(prompt=test_chat.prompt, ws=mock_websocket)
+        mem = Context(prompt=test_chat.prompt)
 
         processor = Processor(voice="test_voice",
             context=mem
@@ -119,7 +119,7 @@ class TestProcessorIntegration:
         """Should process: LLM queue -> LLM -> Memory -> TTS queue -> TTS -> WebSocket audio."""
         from aichat.pipeline.processor import ProfiledResult
 
-        mem = Context(prompt=test_chat.prompt, ws=mock_websocket)
+        mem = Context(prompt=test_chat.prompt)
 
         processor = Processor(voice="test_voice",
             context=mem
@@ -154,7 +154,7 @@ class TestProcessorIntegration:
     async def test_video_and_audio_tracks_work_concurrently(self, mock_websocket, mock_rtc_peer_connection, mock_audio_track, mock_video_track, test_db, test_chat):
         """Should handle video and audio tracks simultaneously."""
         # Use real Memory instead of mock
-        real_memory = Context(prompt=test_chat.prompt, ws=mock_websocket)
+        real_memory = Context(prompt=test_chat.prompt)
 
         processor = Processor(voice="test_voice",
             context=real_memory

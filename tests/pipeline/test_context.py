@@ -40,8 +40,7 @@ def _make_chat(transcripts=None, prompt="Initial situation"):
 def _make_ctx(transcripts=None, prompt="Initial situation"):
     """Fast ctx — __init__ no longer loads models (they are module-level)."""
     chat = _make_chat(transcripts=transcripts, prompt=prompt)
-    ws = FakeWebSocket()
-    ctx = Context(prompt=chat.prompt, ws=ws)
+    ctx = Context(prompt=chat.prompt)
     if transcripts:
         ctx.messages = list(transcripts)
     return ctx

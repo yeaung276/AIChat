@@ -19,10 +19,9 @@ model = AutoModelForCausalLM.from_pretrained(
 model = torch.compile(model)
 
 class Context:
-    def __init__(self, prompt: str, ws: WebSocket):
+    def __init__(self, prompt: str):
         self.prompt = prompt
         self.messages = []
-        self.ws = ws
         self._executor = ThreadPoolExecutor(max_workers=1)
         self._pending = False
         self._topic_modelling_msg_index = 0
@@ -80,7 +79,7 @@ class Context:
                 self._executor, self._update_topic, window
             )
 
-    async def get_context(self, emotion: str) -> str:
+    async def get_context(self, emotion: str | None) -> str:
         return build_prompt(
             situation=self.prompt, emotion=emotion, user=self.messages[-1]["message"]
         )
