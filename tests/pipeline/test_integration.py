@@ -12,6 +12,7 @@ from sqlalchemy.pool import StaticPool
 
 from aichat.pipeline.processor import Processor
 from aichat.pipeline.context import Context
+from aichat.pipeline.response_controller import LatencyController
 from aichat.types import MESSAGE_TYPE_AVATAR_SPEAK, MESSAGE_TYPE_TRANSCRIPT
 from aichat.db_models.chat import Character
 from aichat.db_models.user import User
@@ -178,4 +179,46 @@ class TestProcessorIntegration:
             assert processor.video_task is not None
 
         # Cleanup
+        await processor.close()
+
+    @pytest.mark.asyncio
+    async def test_controller_turn_increments_after_tts_completes(self, mock_websocket, mock_rtc_peer_connection, test_chat):
+        """LatencyController.update should be called once per completed LLM→TTS turn."""
+        from aichat.pipeline.processor import ProfiledResult
+
+        mem = Context(prompt=test_chat.prompt)
+        processor = Processor(voice="test_voice", context=mem)
+        await processor.bind(mock_rtc_peer_connection, mock_websocket)
+
+        await processor.llm_queue.put(ProfiledResult(incoming="hello", profiled=[]))
+        await asyncio.sleep(0.3)
+
+        assert processor.controller.summary["turns"] == 1
+
+        await processor.close()
+
+    @pytest.mark.asyncio
+    async def test_controller_mode_is_passed_to_get_context(self, mock_websocket, mock_rtc_peer_connection, test_chat):
+        """Processor should pass controller.mode as the length argument to context.get_context."""
+        from aichat.pipeline.processor import ProfiledResult
+
+        mem = Context(prompt=test_chat.prompt)
+        processor = Processor(voice="test_voice", context=mem)
+        processor.controller.mode = "short"
+        await processor.bind(mock_rtc_peer_connection, mock_websocket)
+
+        captured_lengths = []
+        original_get_context = mem.get_context
+
+        async def spy_get_context(emotion, length="medium"):
+            captured_lengths.append(length)
+            return await original_get_context(emotion, length)
+
+        mem.get_context = spy_get_context
+
+        await processor.llm_queue.put(ProfiledResult(incoming="test", profiled=[]))
+        await asyncio.sleep(0.3)
+
+        assert captured_lengths == ["short"]
+
         await processor.close()
