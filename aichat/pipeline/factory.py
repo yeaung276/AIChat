@@ -5,6 +5,7 @@ from aichat.components.stt.base import STT
 from aichat.components.llm.base import LLM
 from aichat.components.video.base import VideoAnalyzer
 from aichat.components.tts.base import TTS
+from .response_controller import LatencyController
 
 logger = logging.getLogger("uvicorn")
 
@@ -17,6 +18,11 @@ class ModelFactory:
     supported_emotion_analyzer = None
     supported_tts = None
     supported_faces = {}
+    length_controller_config = {
+        "target_ms": 2000,
+        "upper_limit": 1.30,
+        "lower_limit": 0.80,
+    }
 
     @classmethod
     def configure(cls, config: dict):
@@ -48,6 +54,11 @@ class ModelFactory:
                 "gender": f["gender"],
                 "mode": "neutral",
             }
+            
+        # length controller config
+        if "lc" in config:
+            logger.info("length controller configuration found. updating...")
+            cls.length_controller_config.update(config.get("lc", {}))
 
     @classmethod
     def get_dialogue_model(cls, **kwargs) -> LLM:
@@ -83,6 +94,10 @@ class ModelFactory:
                 f"{name} is not supported avatar. Supported faces are {", ".join(cls.supported_faces.keys())}"
             )
         return cls.supported_faces[name]
+    
+    @classmethod
+    def get_length_controller(cls):
+        return LatencyController(**cls.length_controller_config)
 
     @staticmethod
     def _load_component(conf: dict):

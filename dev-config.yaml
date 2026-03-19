@@ -18,7 +18,10 @@ voice:
   path: "aichat.components.tts.dummy:DummyTTS"
   config: 
 
-
+lc:
+  target_ms: 3000
+  upper_limit: 1.30
+  lower_limit: 0.80
 
 avatars:
   faces:

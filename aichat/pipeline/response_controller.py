@@ -3,8 +3,12 @@ from collections import deque
 
 
 class LatencyController:
-    def __init__(self):
-        self.ewma = 2000
+    def __init__(self, target_ms: int, upper_limit: float, lower_limit: float):
+        self.target = target_ms
+        self.upper_limit = upper_limit
+        self.lower_limit = lower_limit
+        
+        self.ewma = self.target
         self.window = deque(maxlen=15)
         self.mode = "medium"
         self.pending = "medium"
@@ -33,9 +37,9 @@ class LatencyController:
         p80 = sorted(self.window)[int(len(self.window) * 0.8)]
         signal = max(self.ewma, p80)
 
-        if signal < 1600:
+        if signal < self.target * self.lower_limit:
             target = "long"
-        elif signal < 2400:
+        elif signal < self.target * self.upper_limit:
             target = "medium"
         else:
             target = "short"

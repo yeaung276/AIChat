@@ -46,6 +46,7 @@ class Processor:
         self.llm = ModelFactory.get_dialogue_model()
         self.video_analyzer = ModelFactory.get_emotion_model()
         self.tts = ModelFactory.get_voice_model(voice=voice)
+        self.controller = ModelFactory.get_length_controller()
 
         # tasks
         self.video_task: asyncio.Task | None = None
@@ -53,7 +54,6 @@ class Processor:
         self.llm_task: asyncio.Task | None = None
         self.tts_task: asyncio.Task | None = None
         
-        self.controller = LatencyController()
 
 
 
