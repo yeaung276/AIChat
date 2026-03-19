@@ -101,17 +101,17 @@ class Processor:
             )
             
             if self.stt.is_speaking():
-                self._interrupt()
+                await self._interrupt()
             
             if data is not None:
                 # clear interrupt flag previously set
                 await self._clear_interrupt()
                 
-                data = re.sub(r'[^\x00-\x7F]+', '', data)
+                data = re.sub(r'[^\x00-\x7F]+', '', data).lower()
                 
                 await self.llm_queue.put(
                     ProfiledResult(
-                        incoming=data.lower(),
+                        incoming=data,
                         profiled=[
                             {"component": "stt_out", "time": time.perf_counter()}
                         ],
@@ -121,7 +121,7 @@ class Processor:
                 await self.ws.send_json(
                     {
                         "type": MESSAGE_TYPE_TRANSCRIPT,
-                        "data": {"actor": "user", "message": data.lower()},
+                        "data": {"actor": "user", "message": data},
                     }
                 )
 
@@ -143,11 +143,11 @@ class Processor:
                         self.video_analyzer.emotion, self.controller.mode
                     )
                 ):
-                    if self._is_interrupted():
+                    if await self._is_interrupted():
                         break
                     response = resp
                     
-                if self._interrupt() or not response:
+                if await self._is_interrupted() or not response:
                     continue
 
                 data.response = response
@@ -158,38 +158,43 @@ class Processor:
                     self.tts_queue.put(data),
                     self.context.add(actor="assistant", message=response),
                 )
-            except Exception:
-                continue
+            except Exception as e:
+                print("Error in llm task", e)
+                raise e
+                
 
     async def _read_tts_queue(self, queue: asyncio.Queue[ProfiledResult]):
         while True:
             data = await queue.get()
+            try:
+                async for audio, meta in self.tts.synthesize(data.response):
+                    if await self._is_interrupted():
+                        break
+                    
+                    await self.ws.send_json(
+                        {
+                            "type": MESSAGE_TYPE_AVATAR_SPEAK,
+                            "data": {
+                                "audio": base64.b64encode(audio).decode("utf-8"),
+                                "meta": meta,
+                                "waterfall": data.profiled,
+                            },
+                        }
+                    )
 
-            async for audio, meta in self.tts.synthesize(data.response):
-                if self._is_interrupted():
-                    break
-                
+                data.profiled.append({"component": "tts_out", "time": time.perf_counter()})
                 await self.ws.send_json(
                     {
-                        "type": MESSAGE_TYPE_AVATAR_SPEAK,
-                        "data": {
-                            "audio": base64.b64encode(audio).decode("utf-8"),
-                            "meta": meta,
-                            "waterfall": data.profiled,
-                        },
+                        "type": MESSAGE_TYPE_TRANSCRIPT,
+                        "data": {"actor": "assistant", "message": data.response},
                     }
                 )
+                self.controller.update(data.profiled)
+            except Exception as e:
+                print("Error in llm task", e)
+                raise e
 
-            data.profiled.append({"component": "tts_out", "time": time.perf_counter()})
-            await self.ws.send_json(
-                {
-                    "type": MESSAGE_TYPE_TRANSCRIPT,
-                    "data": {"actor": "assistant", "message": data.response},
-                }
-            )
-            self.controller.update(data.profiled)
-
-    def _interrupt(self):
+    async def _interrupt(self):
         # set flag
         self.gen_interrupt.set()
         # drain queues

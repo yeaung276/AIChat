@@ -3,9 +3,12 @@ import shutil
 import zipfile
 import tarfile
 import urllib.request
+import asyncio
 import subprocess
 import sys
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from aichat.components.llm.transformer.model import Transformer
 
 
 def copy_and_unzip(src: str, dest_dir: str):
@@ -77,30 +80,49 @@ def download_hf_model():
     print(f"Downloading model weights for {model_id}...")
     AutoModelForCausalLM.from_pretrained(model_id)
     print("Done.\n")
+    
+async def warmup_vllm():
+    Transformer.configure(
+        model="unsloth/Qwen2.5-0.5B-unsloth-bnb-4bit",
+        lora_path="models/qwen2.5-lora",
+        lora_name="main",
+        lora_rank=8,
+    )
+
+    llm = Transformer()
+
+    async for resp in llm.generate("Hi"):
+        print("...")
 
 
 if __name__ == "__main__":
     # Qwen2.5 LoRA
-    print("=== [1/5] qwen2.5-lora ===")
+    print("=== [1/6] qwen2.5-lora ===")
     copy_and_unzip("assets/qwen2.5-lora.zip", "models")
 
     # Tiny LLaMA LoRA
-    print("=== [2/5] tiny-llama-lora ===")
+    print("=== [2/6] tiny-llama-lora ===")
     copy_and_unzip("assets/tiny-llama-lora.zip", "models")
 
     # Zipformer
-    print("=== [3/5] zipformer ===")
+    print("=== [3/6] zipformer ===")
     download_and_extract_tar(
         url="https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20.tar.bz2",
         dest_dir="models/zipformer",
     )
 
     # spaCy
-    print("=== [4/5] spaCy en_core_web_sm ===")
+    print("=== [4/6] spaCy en_core_web_sm ===")
     download_spacy_model()
 
     # HuggingFace model
-    print("=== [5/5] Qwen3-0.6B ===")
+    print("=== [5/6] Qwen3-0.6B ===")
     download_hf_model()
+    
+    # Warmup vLLM
+    print("=== [6/6] vLLM ===")
+    download_hf_model()
+    
+    asyncio.run(warmup_vllm())
 
     print("=== All models ready ===")
