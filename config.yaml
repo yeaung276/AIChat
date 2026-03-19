@@ -28,7 +28,7 @@ voice:
   name: kokoro
   path: "aichat.components.tts.kokoro:KokoroTTS"
   config:
-    device: gpu
+    device: cpu
 
 lc:
   target_ms: 3000

@@ -1,3 +1,4 @@
+import re
 import time
 import base64
 import asyncio
@@ -100,11 +101,13 @@ class Processor:
             )
             
             if self.stt.is_speaking():
-                await self._interrupt()
+                self._interrupt()
             
             if data is not None:
                 # clear interrupt flag previously set
                 await self._clear_interrupt()
+                
+                data = re.sub(r'[^\x00-\x7F]+', '', data)
                 
                 await self.llm_queue.put(
                     ProfiledResult(
@@ -186,7 +189,7 @@ class Processor:
             )
             self.controller.update(data.profiled)
 
-    async def _interrupt(self):
+    def _interrupt(self):
         # set flag
         self.gen_interrupt.set()
         # drain queues
