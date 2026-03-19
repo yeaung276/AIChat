@@ -58,9 +58,14 @@ class ZipformerSTT:
             raise ValueError("engine not initialized.")
         self.stream = self.engine.create_stream()
         self.queue_o = asyncio.Queue()
-
         self.task = asyncio.create_task(self.process())
         
+    def _decode_step(self):
+        if self.engine is None:
+            return
+        while self.engine.is_ready(self.stream):
+            self.engine.decode_stream(self.stream)
+
     async def is_speaking(self) -> bool:
         return False
 
@@ -72,7 +77,8 @@ class ZipformerSTT:
             raise ValueError("engine not initialized.")
 
         nsamp = samples.astype(np.float32) / 32768
-        self.stream.accept_waveform(sample_rate, nsamp)
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self.stream.accept_waveform, sample_rate, nsamp)
         if not self.queue_o.empty():
             return await self.queue_o.get()
         return None
@@ -84,9 +90,9 @@ class ZipformerSTT:
             )
             raise ValueError("engine not initialized.")
 
+        loop = asyncio.get_event_loop()
         while True:
-            while self.engine.is_ready(self.stream):
-                self.engine.decode_stream(self.stream)
+            await loop.run_in_executor(None, self._decode_step)
 
             if self.engine.is_endpoint(self.stream):
                 result = self.engine.get_result(self.stream)

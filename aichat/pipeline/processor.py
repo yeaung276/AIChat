@@ -100,7 +100,7 @@ class Processor:
                 pcm.flatten(), sample_rate=self.stt.sample_rate
             )
             
-            if self.stt.is_speaking():
+            if await self.stt.is_speaking():
                 await self._interrupt()
             
             if data is not None:
