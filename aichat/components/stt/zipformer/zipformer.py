@@ -60,6 +60,9 @@ class ZipformerSTT:
         self.queue_o = asyncio.Queue()
 
         self.task = asyncio.create_task(self.process())
+        
+    async def is_speaking(self) -> bool:
+        return False
 
     async def accept(self, samples, sample_rate: int):
         if self.engine is None:
@@ -93,6 +96,7 @@ class ZipformerSTT:
             await asyncio.sleep(0.02)
 
     async def flush(self, noise=None):
+        """This is a method which is only use for evaluation and testing E2E using mock audio"""
         if self.engine is None:
             logging.error(
                 "Engine not initialized. please call configure method to start the engine."

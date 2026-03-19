@@ -13,7 +13,10 @@ class DummySTT:
         self.interval = interval_sec
         self._last_emit = 0.0
         self.sample_rate= 16_000
-
+        
+    async def is_speaking(self) -> bool:
+        return False
+    
     async def accept(self, samples, sample_rate: int):
         now = time.time()
 

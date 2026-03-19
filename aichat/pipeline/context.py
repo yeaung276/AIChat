@@ -84,4 +84,5 @@ class Context:
             emotion=emotion,
             user=self.messages[-1]["message"],
             answer_type=length,
+            extra_turns=self.messages[-3:-1]
         )

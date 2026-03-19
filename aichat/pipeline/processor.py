@@ -39,6 +39,7 @@ class Processor:
         self.context = context
         self.llm_queue = asyncio.Queue()
         self.tts_queue = asyncio.Queue()
+        self.gen_interrupt = asyncio.Event()
 
         # processors
         self.stt = ModelFactory.get_speech_model()
@@ -51,6 +52,7 @@ class Processor:
         self.audio_task: asyncio.Task | None = None
         self.llm_task: asyncio.Task | None = None
         self.tts_task: asyncio.Task | None = None
+        
         self.controller = LatencyController()
 
 
@@ -96,7 +98,14 @@ class Processor:
             data = await self.stt.accept(
                 pcm.flatten(), sample_rate=self.stt.sample_rate
             )
+            
+            if self.stt.is_speaking():
+                await self._interrupt()
+            
             if data is not None:
+                # clear interrupt flag previously set
+                await self._clear_interrupt()
+                
                 await self.llm_queue.put(
                     ProfiledResult(
                         incoming=data.lower(),
@@ -105,6 +114,7 @@ class Processor:
                         ],
                     )
                 )
+                
                 await self.ws.send_json(
                     {
                         "type": MESSAGE_TYPE_TRANSCRIPT,
@@ -130,7 +140,12 @@ class Processor:
                         self.video_analyzer.emotion, self.controller.mode
                     )
                 ):
+                    if self._is_interrupted():
+                        break
                     response = resp
+                    
+                if self._interrupt() or not response:
+                    continue
 
                 data.response = response
                 data.profiled.append(
@@ -148,6 +163,9 @@ class Processor:
             data = await queue.get()
 
             async for audio, meta in self.tts.synthesize(data.response):
+                if self._is_interrupted():
+                    break
+                
                 await self.ws.send_json(
                     {
                         "type": MESSAGE_TYPE_AVATAR_SPEAK,
@@ -167,3 +185,20 @@ class Processor:
                 }
             )
             self.controller.update(data.profiled)
+
+    async def _interrupt(self):
+        # set flag
+        self.gen_interrupt.set()
+        # drain queues
+        for q in (self.llm_queue, self.tts_queue):
+            while not q.empty():
+                try:
+                    q.get_nowait()
+                except asyncio.QueueEmpty:
+                    break
+        
+    async def _clear_interrupt(self):
+        self.gen_interrupt.clear()
+        
+    async def _is_interrupted(self):
+        return self.gen_interrupt.is_set()
