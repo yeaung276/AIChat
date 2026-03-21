@@ -92,7 +92,7 @@ async def warmup_vllm():
     llm = Transformer()
 
     async for resp in llm.generate("Hi"):
-        print("...")
+        break
 
 
 if __name__ == "__main__":
