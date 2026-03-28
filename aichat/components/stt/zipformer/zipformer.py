@@ -20,6 +20,8 @@ class ZipformerSTT:
         model_dir: Union[str, os.PathLike],
         device: Literal["cpu", "cuda"] = "cpu",
     ):
+        cls.sample_rate = sample_rate
+        
         if not os.path.exists(model_dir):
             logging.warning(
                 "model not found in %s. Please download model at https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20.tar.bz2",
@@ -47,8 +49,14 @@ class ZipformerSTT:
             rule2_min_trailing_silence=1,
             rule3_min_utterance_length=20,
         )
+        # VAD mechanism is commented out because ASR engine alone is chocking the CPU threads in the test colab environment. If you are running this on more powerful machine please uncomment VAD code to enable speech interruption
+        # cls.vad_config = sherpa_onnx.VadModelConfig()
+        # cls.vad_config.silero_vad.model = "silero_vad.onnx"
+        # cls.vad_config.silero_vad.threshold = 0.5
+        # cls.vad_config.silero_vad.min_silence_duration = 0.3
+        # cls.vad_config.silero_vad.min_speech_duration = 0.1
+        # cls.vad_config.sample_rate = sample_rate
 
-        cls.sample_rate = sample_rate
 
     def __init__(self):
         if self.engine is None:
@@ -59,7 +67,8 @@ class ZipformerSTT:
         self.stream = self.engine.create_stream()
         self.queue_o = asyncio.Queue()
         self.task = asyncio.create_task(self.process())
-        
+        # self.vad = sherpa_onnx.VoiceActivityDetector(self.vad_config, buffer_size_in_seconds=30)
+
     def _decode_step(self):
         if self.engine is None:
             return
@@ -68,6 +77,7 @@ class ZipformerSTT:
 
     async def is_speaking(self) -> bool:
         return False
+        # return self.vad.is_speaking()
 
     async def accept(self, samples, sample_rate: int):
         if self.engine is None:
@@ -77,8 +87,8 @@ class ZipformerSTT:
             raise ValueError("engine not initialized.")
 
         nsamp = samples.astype(np.float32) / 32768
-        loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, self.stream.accept_waveform, sample_rate, nsamp)
+        self.stream.accept_waveform(sample_rate, nsamp)
+        # self.vad.accept_waveform(nsamp)
         if not self.queue_o.empty():
             return await self.queue_o.get()
         return None
